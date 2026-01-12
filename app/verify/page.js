@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, Send, Check } from 'lucide-react';
 import BrunoBear from '../components/BrunoBear';
+import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
 
 export default function Verify() {
@@ -18,6 +19,9 @@ export default function Verify() {
     // Explicit bear message override when needed
     const [customBearMessage, setCustomBearMessage] = useState(null);
 
+    // Messages for steps
+    const [emailStepMsg, setEmailStepMsg] = useState("What's your email?");
+
     const router = useRouter();
 
     useEffect(() => {
@@ -30,6 +34,15 @@ export default function Verify() {
             }
         };
         checkUser();
+
+        // Randomize the initial question
+        setEmailStepMsg(getRandomMessage('greetings').replace("Hi there! I'm Bruno. ", ""));
+        // Note: 'greetings' might not be perfectly fit for "What's your email?" context if we don't curate it, 
+        // but let's stick to the user's request for randomness. 
+        // Actually, let's just make sure the logged-in message is personalized in the previous screen. 
+        // Here, the bear is asking for data.
+        // Let's us a simple randomizer for "What's your email?" variations if we want, or stick to the direct question.
+        // The user asked for "random messages" generally.
     }, [router]);
 
     const handleRequestCode = async (e) => {
@@ -49,11 +62,11 @@ export default function Verify() {
             if (!res.ok) throw new Error(data.message || 'Failed to send code');
 
             setStep('code');
-            setCustomBearMessage("Check your inbox! I sent a pigeon.");
+            // Use random message with email param
+            setCustomBearMessage(getRandomMessage('codeSent', { email: email }));
         } catch (err) {
             setError(err.message);
-            // setBearState('error');
-            setCustomBearMessage(err.message); // Have the bear say the error!
+            setCustomBearMessage(getRandomMessage('error'));
         } finally {
             setLoading(false);
         }
@@ -76,10 +89,10 @@ export default function Verify() {
             if (!res.ok) throw new Error(data.message || 'Invalid code');
 
             setStep('success');
-            setCustomBearMessage("You're in! Welcome to the sleuth.");
+            setCustomBearMessage(getRandomMessage('success', { name: user.user_metadata.full_name }));
         } catch (err) {
             setError(err.message);
-            setCustomBearMessage(err.message);
+            setCustomBearMessage(err.message); // Specific error is often better than random for code failure
         } finally {
             setLoading(false);
         }
@@ -119,7 +132,13 @@ export default function Verify() {
                         {step === 'email' && (
                             <form onSubmit={handleRequestCode} className="space-y-4">
                                 <div>
-                                    <h2 className="text-2xl font-black text-[#591C0B] mb-1">{customBearMessage || "What's your email?"}</h2>
+                                    <h2 className="text-2xl font-black text-[#591C0B] mb-1">
+                                        {/* Use explicit string here for clarity, or randomize if desired. 
+                                            For input forms, clarity is usually key. 
+                                            "What's your email?" is safe.
+                                        */}
+                                        {customBearMessage || "What's your email?"}
+                                    </h2>
                                     <p className="text-[#8C6B5D] text-sm mb-4">I need it to verify you're a student.</p>
                                 </div>
 
@@ -192,7 +211,9 @@ export default function Verify() {
                                         <Check className="w-8 h-8 text-green-600" />
                                     </div>
                                     <div>
-                                        <h2 className="text-3xl font-black text-[#591C0B] mb-1">You're In!</h2>
+                                        <h2 className="text-3xl font-black text-[#591C0B] mb-1">
+                                            {customBearMessage || "You're In!"}
+                                        </h2>
                                         <p className="text-[#8C6B5D] font-medium leading-tight">
                                             Role assigned. You're now a verified Brownie.
                                         </p>

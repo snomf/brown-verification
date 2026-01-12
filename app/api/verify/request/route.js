@@ -80,7 +80,7 @@ export async function POST(req) {
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #FDFBF7; border-radius: 20px; text-align: center;">
                       <h1 style="color: #591C0B; font-size: 28px;">Verification Time! 🐻</h1>
-                      <p style="font-size: 16px; color: #4A3728;">Hi friend! Grab this code to enter the Brown discord:</p>
+                      <p style="font-size: 16px; color: #4A3728;">Hi Brunonian! Grab this code to enter the Brown discord:</p>
                       
                       <div style="background: #FFF; border: 2px dashed #CE1126; padding: 20px; text-align: center; border-radius: 12px; font-size: 36px; font-weight: 800; letter-spacing: 5px; margin: 30px auto; color: #CE1126; max-width: 200px;">
                         ${code}

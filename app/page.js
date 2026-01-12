@@ -1,14 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { MessageSquare } from 'lucide-react';
 import BrunoBear from './components/BrunoBear';
+import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Store messages in state to prevent hydration mismatches and ensure stability
+  const [greetingMsg, setGreetingMsg] = useState('');
+  const [loggedInMsg, setLoggedInMsg] = useState('');
 
   useEffect(() => {
     const checkUser = async () => {
@@ -18,6 +23,9 @@ export default function Home() {
     };
     checkUser();
 
+    // Initial random messages
+    setGreetingMsg(getRandomMessage('greetings'));
+
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -26,6 +34,13 @@ export default function Home() {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  // Update logged in message when user changes
+  useEffect(() => {
+    if (user) {
+      setLoggedInMsg(getRandomMessage('loggedIn', { name: user.user_metadata.full_name }));
+    }
+  }, [user]);
 
   const handleLogin = async () => {
     await supabase.auth.signInWithOAuth({
@@ -76,14 +91,14 @@ export default function Home() {
         </div>
 
         <div className="w-full max-w-xl">
+          {/* Pass state just for tracking, but we handle message rendering manually inside children */}
           <BrunoBear state={user ? "loggedIn" : "greetings"}>
             <div className="space-y-6 text-center md:text-left">
               {!user ? (
                 <>
-                  <h2 className="text-2xl font-black text-[#591C0B]">Hi! I'm Bruno.</h2>
-                  <p className="text-lg text-[#591C0B]">
-                    I check IDs at the door. Do you want to come into the Brown Discord?
-                  </p>
+                  <h2 className="text-2xl font-black text-[#591C0B] min-h-[4rem] flex items-center justify-center md:justify-start">
+                    {greetingMsg || "Hi! I'm Bruno."}
+                  </h2>
                   <button
                     onClick={handleLogin}
                     className="w-full group relative px-8 py-4 bg-[#5865F2] text-white text-lg font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black flex items-center justify-center gap-2 cursor-pointer"
@@ -105,10 +120,9 @@ export default function Home() {
                       <p className="font-bold text-[#591C0B]">{user.user_metadata.full_name}</p>
                     </div>
                   </div>
-                  <h2 className="text-2xl font-black text-[#591C0B]">I recognize you!</h2>
-                  <p className="text-lg text-[#591C0B]">
-                    Ready to prove you're a student?
-                  </p>
+                  <h2 className="text-2xl font-black text-[#591C0B] min-h-[4rem] flex items-center justify-center md:justify-start leading-tight">
+                    {loggedInMsg || "I recognize you!"}
+                  </h2>
                   <div className="flex gap-3">
                     <a
                       href="/verify"
