@@ -87,7 +87,10 @@ export async function POST(req) {
                       </div>
                       
                       <p style="color: #8C6B5D; font-size: 14px;">This code self-destructs (expires) in 10 minutes.</p>
-                      <p style="color: #8C6B5D; font-size: 12px; margin-top: 40px;">- Bruno the Bear</p>
+                      <hr style="border: 0; border-top: 1px solid #CE1126; opacity: 0.2; margin: 30px 0;">
+                      <p style="color: #8C6B5D; font-size: 12px;">
+                        <a href="https://brunov.juainny.com/privacy" style="color: #CE1126; text-decoration: none; font-weight: bold;">Privacy Policy</a> • We hashed your email to protect your identity.
+                      </p>
                     </div>
                 `,
             });

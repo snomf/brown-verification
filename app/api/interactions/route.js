@@ -84,7 +84,10 @@ export async function POST(req) {
                 if (existing) {
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '<:BearShock:1460381158134120529> Oh no! That email is already in my list! One bear per student, please!', flags: 64 },
+                        data: {
+                            content: '<:BearShock:1460381158134120529> Oh no! That email is already in my list! One bear per student, please!\n\nCheck our [Privacy Policy](https://brunov.juainny.com/privacy) to see how we securely hash your data.',
+                            flags: 64
+                        },
                     });
                 }
 
@@ -128,7 +131,9 @@ export async function POST(req) {
                               ${code}
                             </div>
                             <p>Go back to Discord and type <strong>/confirm code: ${code}</strong></p>
-                            <p style="color: #999; font-size: 12px;">(If you didn't ask for this, just ignore it. I might have gotten lost!)</p>
+                            <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                                <a href="https://brunov.juainny.com/privacy" style="color: #CE1126; text-decoration: none;">Privacy Policy</a> • We do not store your email.
+                            </p>
                           </div>
                         `,
                     });
@@ -153,7 +158,10 @@ export async function POST(req) {
 
                 return NextResponse.json({
                     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                    data: { content: '<:bearbear:1458612533492711434> I sent a carrier pigeon (email) to your inbox! When you get the code, type `/confirm code: [your-code]`.', flags: 64 },
+                    data: {
+                        content: '<:bearbear:1458612533492711434> I sent a carrier pigeon (email) to your inbox! When you get the code, type `/confirm code: [your-code]`.\n\n🔒 [Privacy Policy](https://brunov.juainny.com/privacy)',
+                        flags: 64
+                    },
                 });
             }
 
@@ -172,7 +180,7 @@ export async function POST(req) {
                 if (fetchError || !pending) {
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '<:BearShock:1460381158134120529> specific code not found! Are you sure you typed it right?', flags: 64 },
+                        data: { content: '<:BearShock:1460381158134120529> Specific code not found! Are you sure you typed it right?', flags: 64 },
                     });
                 }
 

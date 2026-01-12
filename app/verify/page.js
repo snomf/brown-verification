@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, Send, Check } from 'lucide-react';
 import BrunoBear from '../components/BrunoBear';
+import Link from 'next/link';
 
 export default function Verify() {
     const [user, setUser] = useState(null);
@@ -13,7 +14,6 @@ export default function Verify() {
     const [step, setStep] = useState('email'); // 'email' | 'code' | 'success'
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [bearState, setBearState] = useState('loggedIn'); // 'loggedIn' | 'codeSent' | 'success' | 'error'
 
     // Explicit bear message override when needed
     const [customBearMessage, setCustomBearMessage] = useState(null);
@@ -49,10 +49,10 @@ export default function Verify() {
             if (!res.ok) throw new Error(data.message || 'Failed to send code');
 
             setStep('code');
-            setBearState('codeSent');
+            setCustomBearMessage("Check your inbox! I sent a pigeon.");
         } catch (err) {
             setError(err.message);
-            setBearState('error');
+            // setBearState('error');
             setCustomBearMessage(err.message); // Have the bear say the error!
         } finally {
             setLoading(false);
@@ -76,10 +76,9 @@ export default function Verify() {
             if (!res.ok) throw new Error(data.message || 'Invalid code');
 
             setStep('success');
-            setBearState('success');
+            setCustomBearMessage("You're in! Welcome to the sleuth.");
         } catch (err) {
             setError(err.message);
-            setBearState('error');
             setCustomBearMessage(err.message);
         } finally {
             setLoading(false);
@@ -100,122 +99,116 @@ export default function Verify() {
                 </button>
             </div>
 
-            <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
+            <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4">
+                <Link
+                    href="/privacy"
+                    className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4"
+                >
+                    Privacy Policy
+                </Link>
+            </div>
 
-                {/* Left: Interactive Bear */}
-                <div className="flex justify-center md:justify-end order-1">
-                    <BrunoBear state={bearState} customMessage={customBearMessage} />
-                </div>
-
-                {/* Right: Interaction Card */}
-                <div className="order-2 w-full max-w-md animate-in fade-in slide-in-from-right-8 duration-700">
-                    <div className="bg-white p-8 rounded-[2rem] shadow-[8px_8px_0px_0px_rgba(89,28,11,0.1)] border-2 border-[#591C0B]/10 relative">
-
-                        {/* Progress Dots */}
-                        <div className="absolute top-6 right-6 flex gap-2">
-                            <div className={`w-3 h-3 rounded-full transition-colors ${step === 'email' ? 'bg-[#CE1126]' : 'bg-gray-200'}`}></div>
-                            <div className={`w-3 h-3 rounded-full transition-colors ${step === 'code' ? 'bg-[#CE1126]' : 'bg-gray-200'}`}></div>
-                            <div className={`w-3 h-3 rounded-full transition-colors ${step === 'success' ? 'bg-[#CE1126]' : 'bg-gray-200'}`}></div>
-                        </div>
-
+            <div className="w-full max-w-3xl flex flex-col items-center">
+                {/* We use BrunoBear to wrap the entire form interaction now */}
+                <BrunoBear
+                    state={step === 'email' ? 'loggedIn' : step === 'code' ? 'codeSent' : 'success'}
+                    customMessage={null}
+                >
+                    {/* The content inside the bear's bubble */}
+                    <div className="py-2">
                         {step === 'email' && (
-                            <form onSubmit={handleRequestCode} className="space-y-6">
+                            <form onSubmit={handleRequestCode} className="space-y-4">
                                 <div>
-                                    <h2 className="text-2xl font-black text-[#591C0B] mb-2">Student Email</h2>
-                                    <p className="text-[#8C6B5D]">Where should Bruno send the secret code?</p>
+                                    <h2 className="text-2xl font-black text-[#591C0B] mb-1">{customBearMessage || "What's your email?"}</h2>
+                                    <p className="text-[#8C6B5D] text-sm mb-4">I need it to verify you're a student.</p>
                                 </div>
 
-                                <div>
+                                <div className="flex gap-2">
                                     <input
                                         type="email"
                                         placeholder="josiah_carberry@brown.edu"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl px-4 py-4 text-lg font-medium outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-300"
+                                        className="flex-1 bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl px-4 py-3 text-lg font-medium outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-300"
                                         required
                                         autoFocus
                                     />
+                                    <button
+                                        disabled={loading}
+                                        className="px-6 py-3 bg-[#CE1126] text-white font-bold rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black"
+                                    >
+                                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-5 h-5" />}
+                                    </button>
                                 </div>
-
-                                <button
-                                    disabled={loading}
-                                    className="w-full py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none border-2 border-black"
-                                >
-                                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
-                                        <>
-                                            Send Code <Send className="w-5 h-5" />
-                                        </>
-                                    )}
-                                </button>
+                                {error && <p className="text-red-500 font-bold text-sm bg-red-100 p-2 rounded-lg">{error}</p>}
                             </form>
                         )}
 
                         {step === 'code' && (
-                            <form onSubmit={handleVerifyCode} className="space-y-6">
+                            <form onSubmit={handleVerifyCode} className="space-y-4">
                                 <div>
-                                    <h2 className="text-2xl font-black text-[#591C0B] mb-2">Check Inbox!</h2>
-                                    <p className="text-[#8C6B5D] text-sm break-all">
-                                        We sent a code to <span className="text-[#CE1126] font-bold">{email}</span>
+                                    <h2 className="text-2xl font-black text-[#591C0B] mb-1">{customBearMessage || "Check your inbox!"}</h2>
+                                    <p className="text-[#8C6B5D] text-sm mb-4">
+                                        I sent a code to <span className="text-[#CE1126] font-bold">{email}</span>
                                     </p>
                                 </div>
 
-                                <div>
+                                <div className="flex gap-2">
                                     <input
                                         type="text"
                                         placeholder="000000"
                                         maxLength={6}
                                         value={code}
                                         onChange={(e) => setCode(e.target.value)}
-                                        className="w-full tracking-[1rem] text-center text-3xl font-black bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl px-4 py-4 outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-200 font-mono"
+                                        className="flex-1 tracking-[0.5em] text-center text-2xl font-black bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl px-4 py-3 outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-200 font-mono"
                                         required
                                         autoFocus
                                     />
+                                    <button
+                                        disabled={loading}
+                                        className="px-6 py-3 bg-[#CE1126] text-white font-bold rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black"
+                                    >
+                                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Check className="w-5 h-5" />}
+                                    </button>
                                 </div>
 
-                                <button
-                                    disabled={loading}
-                                    className="w-full py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none border-2 border-black"
-                                >
-                                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
-                                        <>
-                                            Verify Me! <Check className="w-5 h-5" />
-                                        </>
-                                    )}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => { setStep('email'); setBearState('loggedIn'); }}
-                                    className="w-full text-center text-sm font-bold text-gray-400 hover:text-[#591C0B]"
-                                >
-                                    Wrong email? Go back.
-                                </button>
+                                <div className="flex justify-between items-center text-sm">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setStep('email'); }}
+                                        className="font-bold text-gray-400 hover:text-[#591C0B] underline"
+                                    >
+                                        Wrong email?
+                                    </button>
+                                    {error && <p className="text-red-500 font-bold">{error}</p>}
+                                </div>
                             </form>
                         )}
 
                         {step === 'success' && (
-                            <div className="text-center space-y-6 py-4">
-                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto animate-in zoom-in spin-in-12 duration-500">
-                                    <Check className="w-10 h-10 text-green-600" />
-                                </div>
-
-                                <div>
-                                    <h2 className="text-3xl font-black text-[#591C0B] mb-2">You're In!</h2>
-                                    <p className="text-[#8C6B5D]">
-                                        Your Discord role has been assigned. You're officially a verified Brownie.
-                                    </p>
+                            <div className="text-left space-y-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center animate-in zoom-in spin-in-12 duration-500">
+                                        <Check className="w-8 h-8 text-green-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-3xl font-black text-[#591C0B] mb-1">You're In!</h2>
+                                        <p className="text-[#8C6B5D] font-medium leading-tight">
+                                            Role assigned. You're now a verified Brownie.
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <button
                                     onClick={() => router.push('/')}
-                                    className="w-full py-4 bg-white border-2 border-[#591C0B]/10 text-[#591C0B] font-bold rounded-xl hover:bg-[#FDFBF7] transition-colors"
+                                    className="w-full py-3 bg-white border-2 border-[#591C0B]/10 text-[#591C0B] font-bold rounded-xl hover:bg-[#FDFBF7] transition-colors mt-4"
                                 >
                                     Return to Home
                                 </button>
                             </div>
                         )}
                     </div>
-                </div>
+                </BrunoBear>
             </div>
         </div>
     );
