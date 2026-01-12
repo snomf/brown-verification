@@ -193,7 +193,7 @@ export async function POST(req) {
 
                     await supabase.from('pending_codes').delete().eq('discord_id', discordUserId);
 
-                    await logToChannel(discordUserId);
+                    await logToChannel(discordUserId, 'command');
 
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
