@@ -1,6 +1,6 @@
 import { InteractionType, InteractionResponseType, verifyKey } from 'discord-interactions';
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { hashEmail } from '@/lib/crypto';
 import { assignRole, logToChannel } from '@/lib/discord';
 import { Resend } from 'resend';
