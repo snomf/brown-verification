@@ -117,7 +117,7 @@ export async function POST(req) {
 
                 try {
                     const { data, error: resendError } = await resend.emails.send({
-                        from: 'Verification Bot <verify@brownv.juainny.com>',
+                        from: 'Verification Bot <verify@brunov.juainny.com>',
                         to: email,
                         subject: 'Your Discord Verification Code',
                         html: `
@@ -214,4 +214,15 @@ export async function POST(req) {
         console.error('[Global Error] Interaction Handler:', err);
         return new Response('Internal Server Error', { status: 500 });
     }
+}
+
+// GET handler for debugging/diagnostics
+export async function GET() {
+    return NextResponse.json({
+        status: 'Interaction Endpoint Online',
+        method_required: 'POST',
+        public_key_configured: !!process.env.DISCORD_PUBLIC_KEY,
+        public_key_prefix: process.env.DISCORD_PUBLIC_KEY ? process.env.DISCORD_PUBLIC_KEY.substring(0, 5) + '...' : 'MISSING',
+        usage: 'This URL should be pasted into the Discord Developer Portal under "Interactions Endpoint URL".'
+    });
 }

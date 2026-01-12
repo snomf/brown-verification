@@ -62,7 +62,7 @@ export async function POST(req) {
             // Note: If you have a custom domain verified in Resend, 
             // you should change 'onboarding@resend.dev' to 'verify@yourdomain.com'
             const { data, error: resendError } = await resend.emails.send({
-                from: 'Verification Bot <verify@brownv.juainny.com>',
+                from: 'Verification Bot <verify@brunov.juainny.com>',
                 to: email,
                 subject: 'Your Brown Verification Code',
                 html: `
