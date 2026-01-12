@@ -19,10 +19,10 @@ export default function BrunoBear({ state, customMessage, onMessageClick, childr
     }, [state, customMessage, children]);
 
     return (
-        <div className="relative flex flex-col items-center md:items-start animate-in fade-in slide-in-from-bottom-8 duration-700 w-full max-w-2xl mx-auto md:mx-0">
+        <div className="relative flex flex-col items-start animate-in fade-in slide-in-from-bottom-8 duration-700 w-full max-w-2xl mx-auto md:mx-0">
             {/* Chat BubbleContainer */}
             <div
-                className="relative bg-white text-black p-6 md:p-8 rounded-[2rem] rounded-bl-none shadow-xl mb-4 w-full transform transition-all border-2 border-[#591C0B]/5"
+                className="relative bg-white text-black p-6 md:p-10 rounded-[2.5rem] rounded-bl-none shadow-2xl mb-4 w-full transform transition-all border-2 border-[#591C0B]/5 z-20"
                 onClick={onMessageClick}
             >
                 {children ? (
@@ -30,29 +30,31 @@ export default function BrunoBear({ state, customMessage, onMessageClick, childr
                         {children}
                     </div>
                 ) : (
-                    <p className="text-lg md:text-2xl font-bold font-handwritten text-[#591C0B]">{message}</p>
+                    <p className="text-xl md:text-3xl font-bold font-handwritten text-[#591C0B] leading-tight">{message}</p>
                 )}
 
-                {/* Triangle Pointer */}
-                <div className="absolute bottom-[-18px] left-10 md:left-16 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[20px] border-t-white drop-shadow-sm"></div>
+                {/* Triangle Pointer - Aligned with the Bear below */}
+                <div className="absolute bottom-[-22px] left-12 md:left-20 w-0 h-0 border-l-[25px] border-l-transparent border-r-[25px] border-r-transparent border-t-[25px] border-t-white drop-shadow-md"></div>
             </div>
 
             {/* Bear Image Wrapper with Cropping */}
             {/* 
-         User Requirement: "There are three, its just one and it needs to be big"
-         "most of it should be cut out alwayus because you can tell too much that it si a statue with the base"
-         
-         Solution:
-         - One single image div.
-         - Increased dimensions (w-64 md:w-80).
-         - Overflow hidden + object-top to crop the bottom (base).
-      */}
-            <div className="relative w-64 md:w-80 h-56 md:h-72 overflow-hidden ml-4 md:ml-8 rounded-b-3xl">
+                User Requirement: "On mobile make that bear image much larger, add somehing that forces the image to be around the arrow"
+                Solution:
+                - Removed items-center, using items-start always for consistency with bubble arrow.
+                - Increased mobile max-width (max-w-[320px]).
+                - Adjusted height to be larger on mobile too (h-72).
+                - ml-4 to align head under arrow.
+            */}
+            <div className="relative w-full max-w-[320px] md:max-w-none md:w-96 h-72 md:h-80 overflow-hidden ml-4 md:ml-12 z-10 rounded-b-[3rem] transform -translate-y-4">
                 <img
                     src="/bruno-bear.png"
-                    alt="Bruno"
-                    className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
+                    alt="Bruno the Bear"
+                    className="w-full h-full object-cover object-top hover:scale-110 transition-transform duration-700"
                 />
+
+                {/* Subtle vignette to hide the cut-off edges smoothly */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#FDFBF7]/20 to-transparent pointer-events-none"></div>
             </div>
         </div>
     );

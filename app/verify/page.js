@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Send, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, Send, Check, MessageSquare, Instagram, Shield } from 'lucide-react';
 import BrunoBear from '../components/BrunoBear';
 import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
@@ -93,6 +93,28 @@ export default function Verify() {
 
     return (
         <div className="min-h-screen bg-[#FDFBF7] text-[#4A3728] font-sans flex flex-col items-center justify-center p-6 overflow-hidden relative">
+            {/* Social Sidebar/Floating */}
+            <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
+                <a
+                    href="https://discord.gg/BxjyefMugy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 bg-white border-2 border-[#591C0B]/10 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-[#5865F2]"
+                    title="Join the Discord"
+                >
+                    <MessageSquare className="w-6 h-6 fill-current" />
+                </a>
+                <a
+                    href="https://instagram.com/gusfringed"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 bg-white border-2 border-[#591C0B]/10 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-[#E4405F]"
+                    title="Follow @gusfringed"
+                >
+                    <Instagram className="w-6 h-6" />
+                </a>
+            </div>
+
             <div className="absolute top-6 left-6 z-50">
                 <button
                     onClick={() => router.push('/')}
@@ -106,8 +128,9 @@ export default function Verify() {
             <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4">
                 <Link
                     href="/privacy"
-                    className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4"
+                    className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4 flex items-center gap-1"
                 >
+                    <Shield className="w-4 h-4" />
                     Privacy Policy
                 </Link>
             </div>
@@ -122,7 +145,7 @@ export default function Verify() {
                             <form onSubmit={handleRequestCode} className="space-y-4">
                                 <div>
                                     <h2 className="text-2xl font-black text-[#591C0B] mb-1">
-                                        {customBearMessage || "What's your Brown username?"}
+                                        {customBearMessage || "What's your Brown (email) username?"}
                                     </h2>
                                     <p className="text-[#8C6B5D] text-sm mb-4">Just the part before the @brown.edu!</p>
                                 </div>
