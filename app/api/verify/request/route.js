@@ -7,16 +7,26 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
     try {
-        const { email, userId } = await req.json();
+        console.log('[Verify Log] POST /api/verify/request started');
+        const body = await req.json();
+        const { email, userId } = body;
+
+        console.log('[Verify Log] Received data:', { email, userId: userId ? 'Present' : 'MISSING' });
 
         // 1. Basic Validation
         if (!email || !email.toLowerCase().endsWith('@brown.edu')) {
-            console.warn('[Verify] 400: Invalid email domain:', email);
+            console.warn('[Verify Log] 400: Invalid email domain:', email);
             return NextResponse.json({ message: 'Only @brown.edu emails are allowed. Please check for spelling errors.' }, { status: 400 });
+        }
+
+        if (!userId) {
+            console.error('[Verify Log] 400: Missing userId in request');
+            return NextResponse.json({ message: 'User ID is missing. Please re-login with Discord.' }, { status: 400 });
         }
 
         // 2. Check for Duplicate (Privacy Safe)
         const emailHash = hashEmail(email);
+        console.log('[Verify Log] Hash generated, checking for duplicate...');
         const { data: existing, error: checkError } = await supabase
             .from('verifications')
             .select('id')
@@ -24,20 +34,22 @@ export async function POST(req) {
             .maybeSingle();
 
         if (checkError) {
-            console.error('[Verify] Supabase Check Error:', checkError);
-            return NextResponse.json({ message: 'Database error. Please try again later.' }, { status: 500 });
+            console.error('[Verify Log] Supabase Check Error:', checkError);
+            return NextResponse.json({ message: 'Database error while checking email status.' }, { status: 500 });
         }
 
         if (existing) {
-            console.warn('[Verify] 400: Duplicate email hash detected');
+            console.warn('[Verify Log] 400: Duplicate email hash detected');
             return NextResponse.json({ message: 'This email has already been used to verify a student.' }, { status: 400 });
         }
 
         // 3. Generate Code
+        console.log('[Verify Log] Generating verification code...');
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
         // 4. Save Pending Code
+        console.log('[Verify Log] Saving code to Supabase pending_codes...');
         const { error: dbError } = await supabase
             .from('pending_codes')
             .upsert({
@@ -48,13 +60,15 @@ export async function POST(req) {
             }, { onConflict: 'discord_id' });
 
         if (dbError) {
-            console.error('[Verify] Supabase Upsert Error:', dbError);
-            throw dbError;
+            console.error('[Verify Log] Supabase Upsert Error:', dbError);
+            return NextResponse.json({ message: 'Failed to store verification code in database.', error: dbError.message }, { status: 500 });
         }
+
+        console.log('[Verify Log] Code saved! Preparing to send email...');
 
         // 5. Send Email via Resend
         if (!process.env.RESEND_API_KEY) {
-            console.error('[Verify] 500: Missing RESEND_API_KEY');
+            console.error('[Verify Log] 500: Missing RESEND_API_KEY in environment');
             return NextResponse.json({ message: 'Email service not configured.' }, { status: 500 });
         }
 
@@ -109,14 +123,25 @@ export async function GET() {
             }, { status: 500 });
         }
 
-        const { data, error } = await resend.domains.list();
+        let domainResponse;
+        try {
+            domainResponse = await resend.domains.list();
+        } catch (e) {
+            domainResponse = { error: { message: e.message } };
+        }
+
+        const isRestricted = domainResponse.error?.name === 'restricted_api_key';
 
         return NextResponse.json({
             status: 'Diagnostic Info',
             resend_api_configured: true,
             api_key_prefix: process.env.RESEND_API_KEY.substring(0, 5) + '...',
-            domains_found: data || [],
-            error_from_resend: error || null
+            key_status: isRestricted ? 'Restricted (Send-Only)' : 'Full Access or Other',
+            current_from_domain: 'brunov.juainny.com',
+            raw_resend_error: domainResponse.error || null,
+            advice: isRestricted
+                ? 'Your API key is restricted to SENDING ONLY. This is fine, but make sure you have added brunov.juainny.com as a verified domain in Resend and that your key is allowed to send from it.'
+                : 'Check if your domain is verified in the Resend Dashboard.'
         });
     } catch (err) {
         return NextResponse.json({
