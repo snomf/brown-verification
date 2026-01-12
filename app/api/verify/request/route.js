@@ -10,20 +10,27 @@ export async function POST(req) {
         const { email, userId } = await req.json();
 
         // 1. Basic Validation
-        if (!email || !email.endsWith('@brown.edu')) {
-            return NextResponse.json({ message: 'Only Brown University emails are allowed.' }, { status: 400 });
+        if (!email || !email.toLowerCase().endsWith('@brown.edu')) {
+            console.warn('[Verify] 400: Invalid email domain:', email);
+            return NextResponse.json({ message: 'Only @brown.edu emails are allowed. Please check for spelling errors.' }, { status: 400 });
         }
 
         // 2. Check for Duplicate (Privacy Safe)
         const emailHash = hashEmail(email);
-        const { data: existing } = await supabase
+        const { data: existing, error: checkError } = await supabase
             .from('verifications')
             .select('id')
             .eq('email_hash', emailHash)
-            .single();
+            .maybeSingle();
+
+        if (checkError) {
+            console.error('[Verify] Supabase Check Error:', checkError);
+            return NextResponse.json({ message: 'Database error. Please try again later.' }, { status: 500 });
+        }
 
         if (existing) {
-            return NextResponse.json({ message: 'This email has already been used for verification.' }, { status: 400 });
+            console.warn('[Verify] 400: Duplicate email hash detected');
+            return NextResponse.json({ message: 'This email has already been used to verify a student.' }, { status: 400 });
         }
 
         // 3. Generate Code
@@ -40,17 +47,22 @@ export async function POST(req) {
                 expires_at: expiresAt.toISOString()
             }, { onConflict: 'discord_id' });
 
-        if (dbError) throw dbError;
+        if (dbError) {
+            console.error('[Verify] Supabase Upsert Error:', dbError);
+            throw dbError;
+        }
 
         // 5. Send Email via Resend
         if (!process.env.RESEND_API_KEY) {
-            console.error('[Error] Missing RESEND_API_KEY');
-            return NextResponse.json({ message: 'Email service not configured on Vercel.' }, { status: 500 });
+            console.error('[Verify] 500: Missing RESEND_API_KEY');
+            return NextResponse.json({ message: 'Email service not configured.' }, { status: 500 });
         }
 
         try {
+            // Note: If you have a custom domain verified in Resend, 
+            // you should change 'onboarding@resend.dev' to 'verify@yourdomain.com'
             const { data, error: resendError } = await resend.emails.send({
-                from: 'Verification Bot <onboarding@resend.dev>',
+                from: 'Verification Bot <verify@brownv.juainny.com>',
                 to: email,
                 subject: 'Your Brown Verification Code',
                 html: `
@@ -66,20 +78,20 @@ export async function POST(req) {
             });
 
             if (resendError) {
-                console.error('[Resend Error]:', resendError);
+                console.error('[Verify] Resend Error details:', resendError);
                 return NextResponse.json({
-                    message: 'Email failed to send. Note: Resend Free Tier only allows sending to your own email address.',
-                    details: resendError.message
+                    message: 'Resend failed to send email. Check your domain verification.',
+                    error: resendError.message
                 }, { status: 500 });
             }
         } catch (emailErr) {
-            console.error('[Resend Exception]:', emailErr);
+            console.error('[Verify] Resend Exception:', emailErr);
             throw emailErr;
         }
 
         return NextResponse.json({ message: 'Code sent!' });
     } catch (error) {
-        console.error('Request Error details:', error);
+        console.error('[Verify] Global 500 Error:', error);
         return NextResponse.json({
             message: 'Internal server error.',
             error: error.message

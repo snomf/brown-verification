@@ -117,7 +117,7 @@ export async function POST(req) {
 
                 try {
                     const { data, error: resendError } = await resend.emails.send({
-                        from: 'Verification Bot <onboarding@resend.dev>',
+                        from: 'Verification Bot <verify@brownv.juainny.com>',
                         to: email,
                         subject: 'Your Discord Verification Code',
                         html: `
