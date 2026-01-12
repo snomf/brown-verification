@@ -39,45 +39,19 @@ export default function BrunoBear({ state, customMessage, onMessageClick, childr
 
             {/* Bear Image Wrapper with Cropping */}
             {/* 
-         User Requirement: "can't ALWAYS see the entire image like most of it should be cut out... tell too much that it is a statue with the base"
-         Solution: overflow-hidden container height, image positioned to push base down.
+         User Requirement: "There are three, its just one and it needs to be big"
+         "most of it should be cut out alwayus because you can tell too much that it si a statue with the base"
+         
+         Solution:
+         - One single image div.
+         - Increased dimensions (w-64 md:w-80).
+         - Overflow hidden + object-top to crop the bottom (base).
       */}
-            <div className="relative w-48 md:w-64 h-48 md:h-64 overflow-hidden ml-4 md:ml-8 rounded-b-3xl">
-                <img
-                    src="/bruno-bear.png"
-                    alt="Bruno the Bear"
-                    className="absolute w-full h-auto top-0 left-0 drop-shadow-2xl hover:rotate-1 transition-transform duration-300"
-                    style={{
-                        // Push the image down slightly if needed, or if the image has a lot of empty space at top, pull it up.
-                        // Assuming the image is the full statue, we want to crop the bottom.
-                        // If we just limit height (h-64) and let it flow, the bottom gets cut off if aspect ratio pushes it.
-                        // Let's rely on the container cropping.
-                        objectFit: 'cover',
-                        objectPosition: 'top center',
-                        height: '130%' // Force image to be taller than container so bottom is cropped? 
-                        // better yet:
-                    }}
-                />
-                {/* Alternative simple approach: Standard img, negative margin-bottom to pull it "down" into overflow:hidden? 
-            Actually, if I want to HIDE the base, and the base is at the bottom, I just need a container that is SHORTER than the image.
-         */}
-                <div className="absolute inset-0 pointer-events-none">
-                    {/* We simply render the image with a scale or translation to hide the feet. */}
-                    <img
-                        src="/bruno-bear.png"
-                        alt=""
-                        className="w-full h-auto transform translate-y-[10%]" // Push it down 10%? No that reveals top.
-                    // Wait, if it's a statue, feet are at bottom. To hide feet, we need the container to stop before the feet.
-                    />
-                </div>
-            </div>
-
-            {/* Let's try a cleaner approach for the image div */}
-            <div className="relative w-48 md:w-64 h-40 md:h-56 overflow-hidden ml-4 md:ml-8 z-10">
+            <div className="relative w-64 md:w-80 h-56 md:h-72 overflow-hidden ml-4 md:ml-8 rounded-b-3xl">
                 <img
                     src="/bruno-bear.png"
                     alt="Bruno"
-                    className="w-full h-auto object-cover object-top"
+                    className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
                 />
             </div>
         </div>
