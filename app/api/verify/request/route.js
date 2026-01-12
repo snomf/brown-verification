@@ -43,25 +43,46 @@ export async function POST(req) {
         if (dbError) throw dbError;
 
         // 5. Send Email via Resend
-        await resend.emails.send({
-            from: 'Verification Bot <onboarding@resend.dev>',
-            to: email,
-            subject: 'Your Brown Verification Code',
-            html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h2 style="color: #ef4444;">Brown University Verification</h2>
-          <p>Hello! Use the code below to verify your account in the Discord server.</p>
-          <div style="background: #f4f4f4; padding: 20px; text-align: center; border-radius: 5px; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-            ${code}
-          </div>
-          <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
-        </div>
-      `,
-        });
+        if (!process.env.RESEND_API_KEY) {
+            console.error('[Error] Missing RESEND_API_KEY');
+            return NextResponse.json({ message: 'Email service not configured on Vercel.' }, { status: 500 });
+        }
+
+        try {
+            const { data, error: resendError } = await resend.emails.send({
+                from: 'Verification Bot <onboarding@resend.dev>',
+                to: email,
+                subject: 'Your Brown Verification Code',
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                      <h2 style="color: #ef4444;">Brown University Verification</h2>
+                      <p>Hello! Use the code below to verify your account in the Discord server.</p>
+                      <div style="background: #f4f4f4; padding: 20px; text-align: center; border-radius: 5px; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                        ${code}
+                      </div>
+                      <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
+                    </div>
+                `,
+            });
+
+            if (resendError) {
+                console.error('[Resend Error]:', resendError);
+                return NextResponse.json({
+                    message: 'Email failed to send. Note: Resend Free Tier only allows sending to your own email address.',
+                    details: resendError.message
+                }, { status: 500 });
+            }
+        } catch (emailErr) {
+            console.error('[Resend Exception]:', emailErr);
+            throw emailErr;
+        }
 
         return NextResponse.json({ message: 'Code sent!' });
     } catch (error) {
-        console.error('Request Error:', error);
-        return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
+        console.error('Request Error details:', error);
+        return NextResponse.json({
+            message: 'Internal server error.',
+            error: error.message
+        }, { status: 500 });
     }
 }
