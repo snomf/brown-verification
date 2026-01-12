@@ -56,7 +56,7 @@ export async function POST(req) {
             if (!discordUserId) {
                 return NextResponse.json({
                     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                    data: { content: '❌ Could not determine your User ID.', flags: 64 },
+                    data: { content: '<:BearShock:1460381158134120529> Roar?! I can\'t see your User ID! Try again?', flags: 64 },
                 });
             }
 
@@ -68,7 +68,7 @@ export async function POST(req) {
                 if (!email || !email.toLowerCase().endsWith('@brown.edu')) {
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '❌ Only @brown.edu emails are allowed.', flags: 64 },
+                        data: { content: '<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** email! Are you sure you\'re in the right place?', flags: 64 },
                     });
                 }
 
@@ -84,7 +84,7 @@ export async function POST(req) {
                 if (existing) {
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '❌ This email has already been used to verify a user.', flags: 64 },
+                        data: { content: '<:BearShock:1460381158134120529> Oh no! That email is already in my list! One bear per student, please!', flags: 64 },
                     });
                 }
 
@@ -111,23 +111,24 @@ export async function POST(req) {
                     console.error('[Error] Missing RESEND_API_KEY');
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '❌ Email service is not configured on the server.', flags: 64 },
+                        data: { content: '<:BearShock:1460381158134120529> My carrier pigeons are on strike (Server Config Error). Tell an admin!', flags: 64 },
                     });
                 }
 
                 try {
                     const { data, error: resendError } = await resend.emails.send({
-                        from: 'Verification Bot <verify@brunov.juainny.com>',
+                        from: 'Bruno Verifies <verify@brunov.juainny.com>',
                         to: email,
-                        subject: 'Your Discord Verification Code',
+                        subject: 'Your Bruno Verification Code',
                         html: `
-                          <div style="font-family: sans-serif; padding: 20px;">
-                            <h2 style="color: #ef4444;">Brown University Verification</h2>
-                            <p>Your verification code is:</p>
-                            <div style="background: #f4f4f4; padding: 20px; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 5px;">
+                          <div style="font-family: sans-serif; padding: 20px; text-align: center;">
+                            <h1 style="color: #591C0B;">Bruno sent you a code! 🐻</h1>
+                            <p>You asked to verify your Brown status. Here is the magic key:</p>
+                            <div style="background: #FDFBF7; color: #CE1126; padding: 20px; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 5px; border: 2px dashed #591C0B; border-radius: 15px; margin: 20px auto; max-width: 300px;">
                               ${code}
                             </div>
-                            <p>Type <strong>/confirm code: ${code}</strong> in Discord to verify.</p>
+                            <p>Go back to Discord and type <strong>/confirm code: ${code}</strong></p>
+                            <p style="color: #999; font-size: 12px;">(If you didn't ask for this, just ignore it. I might have gotten lost!)</p>
                           </div>
                         `,
                     });
@@ -137,7 +138,7 @@ export async function POST(req) {
                         return NextResponse.json({
                             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                             data: {
-                                content: `❌ Email failed to send. Note: Resend Free Tier only allows sending to your own email address. (Error: ${resendError.message})`,
+                                content: `<:BearShock:1460381158134120529> The email machine is broken! (Error: ${resendError.message})`,
                                 flags: 64
                             },
                         });
@@ -146,13 +147,13 @@ export async function POST(req) {
                     console.error('[Error] Email sending failed Exception:', emailErr);
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '❌ Failed to send verification email. Please try again later.', flags: 64 },
+                        data: { content: '<:BearShock:1460381158134120529> I tripped and dropped the email! Please try again later.', flags: 64 },
                     });
                 }
 
                 return NextResponse.json({
                     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                    data: { content: '📬 A verification code has been sent to your email! Once received, type `/confirm code: [your-code]`.', flags: 64 },
+                    data: { content: '<:bearbear:1458612533492711434> I sent a carrier pigeon (email) to your inbox! When you get the code, type `/confirm code: [your-code]`.', flags: 64 },
                 });
             }
 
@@ -171,14 +172,14 @@ export async function POST(req) {
                 if (fetchError || !pending) {
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '❌ Invalid or expired code.', flags: 64 },
+                        data: { content: '<:BearShock:1460381158134120529> specific code not found! Are you sure you typed it right?', flags: 64 },
                     });
                 }
 
                 if (new Date(pending.expires_at) < new Date()) {
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '❌ This code has expired. Please run /verify again.', flags: 64 },
+                        data: { content: '<:bearbear:1458612533492711434> That code is stale! Like old honey. Run `/verify` again!', flags: 64 },
                     });
                 }
 
@@ -198,13 +199,13 @@ export async function POST(req) {
 
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '✅ **Success!** You have been verified and assigned the accepted role. Welcome to the server brownie!', flags: 64 },
+                        data: { content: '<:Verified:1460379061816787139> **You\'re in!** I\'ve sniffed you out and you\'re legit. Welcome to the sleuth! <:Brown:1449845697506705501>', flags: 64 },
                     });
                 } catch (err) {
                     console.error('[Error] Role Assignment Failed:', err);
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '❌ Something went wrong while assigning your role. Please contact an admin.', flags: 64 },
+                        data: { content: '<:BearShock:1460381158134120529> I verified you, but I couldn\'t give you the role! Yell at an admin!', flags: 64 },
                     });
                 }
             }
@@ -215,15 +216,4 @@ export async function POST(req) {
         console.error('[Global Error] Interaction Handler:', err);
         return new Response('Internal Server Error', { status: 500 });
     }
-}
-
-// GET handler for debugging/diagnostics
-export async function GET() {
-    return NextResponse.json({
-        status: 'Interaction Endpoint Online',
-        method_required: 'POST',
-        public_key_configured: !!process.env.DISCORD_PUBLIC_KEY,
-        public_key_prefix: process.env.DISCORD_PUBLIC_KEY ? process.env.DISCORD_PUBLIC_KEY.substring(0, 5) + '...' : 'MISSING',
-        usage: 'This URL should be pasted into the Discord Developer Portal under "Interactions Endpoint URL".'
-    });
 }

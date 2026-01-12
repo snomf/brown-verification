@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ShieldCheck, GraduationCap, Lock, ArrowRight, MessageSquare } from 'lucide-react';
+import { ArrowRight, MessageSquare, ShieldCheck } from 'lucide-react';
+import BrunoBear from './components/BrunoBear';
+import PrivacyModal from './components/PrivacyModal';
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -17,7 +19,6 @@ export default function Home() {
     };
     checkUser();
 
-    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -41,114 +42,102 @@ export default function Home() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#120a07] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+    <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amber-600"></div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#120a07] text-white selection:bg-red-600/30">
-      {/* Background Glows */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-900/20 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-amber-900/10 blur-[120px] rounded-full"></div>
+    <div className="min-h-screen bg-[#FDFBF7] text-[#4A3728] font-sans selection:bg-amber-200">
+      <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
+
+      {/* Navbarish thing */}
+      <div className="absolute top-6 left-6 md:top-10 md:left-10 z-50">
+        <img src="/brown-crest.png" alt="Brown University" className="w-16 h-auto opacity-80 hover:opacity-100 transition-opacity" />
       </div>
 
-      <main className="max-w-6xl mx-auto px-6 py-20 flex flex-col items-center">
-        {/* Header/Logo Area */}
-        <div className="mb-8 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-1000">
-          <div className="bg-red-600/20 p-3 rounded-2xl border border-red-500/30">
-            <GraduationCap className="w-8 h-8 text-red-500" />
+      <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4">
+        <button
+          onClick={() => setShowPrivacy(true)}
+          className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4"
+        >
+          Privacy Policy
+        </button>
+      </div>
+
+      <main className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Background Doodles (CSS or SVG could go here for extra silly vibes) */}
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+
+        <div className="w-full max-w-6xl grid md:grid-cols-2 gap-12 items-center">
+
+          {/* Left: Bruno Bear */}
+          <div className="flex justify-center md:justify-end order-2 md:order-1">
+            <BrunoBear state={user ? "loggedIn" : "greetings"} />
           </div>
-          <span className="text-xl font-bold tracking-tight">BrownPortal</span>
-        </div>
 
-        {/* Hero Section */}
-        <div className="text-center max-w-3xl mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
-            Verify Your <span className="text-red-500">Excellence.</span>
-          </h1>
-          <p className="text-lg text-gray-400 leading-relaxed mb-10">
-            Securely connect your Discord account to the Brown University community.
-            Privacy-first verification that protects your student identity.
-          </p>
-
-          {!user ? (
-            <button
-              onClick={handleLogin}
-              className="group relative px-8 py-4 bg-white text-black font-bold rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-            >
-              <div className="relative z-10 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Connect Discord
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-amber-600 opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            </button>
-          ) : (
-            <div className="flex flex-col items-center gap-6">
-              <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-xl">
-                {/* Discord Avatar */}
-                <img
-                  src={user.user_metadata.avatar_url}
-                  alt="Avatar"
-                  className="w-12 h-12 rounded-full ring-2 ring-red-500/50"
-                />
-                <div className="text-left">
-                  <p className="text-sm text-gray-400">Logged in as</p>
-                  <p className="font-bold">{user.user_metadata.full_name || user.email}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="ml-4 px-3 py-1 text-xs bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-                >
-                  Logout
-                </button>
-              </div>
-
-              <a
-                href="/verify"
-                className="group relative px-8 py-4 bg-red-600 text-white font-bold rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-              >
-                Start Verification
-              </a>
+          {/* Right: Actions */}
+          <div className="flex flex-col items-center md:items-start order-1 md:order-2 space-y-8 animate-in fade-in slide-in-from-right-8 duration-700 delay-200">
+            <div>
+              <h1 className="text-5xl md:text-7xl font-black text-[#591C0B] mb-2 tracking-tight">
+                Bruno Verifies
+              </h1>
+              <p className="text-xl text-[#8C6B5D] font-medium">
+                The friendliest way to get into the Discord.
+              </p>
             </div>
-          )}
-        </div>
 
-        {/* Feature Grid */}
-        <div className="grid md:grid-cols-3 gap-6 w-full animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
-          <FeatureCard
-            icon={<Lock className="w-6 h-6 text-red-500" />}
-            title="Privacy First"
-            description="Your email is hashed and deleted. Even the server owner can't see it."
-          />
-          <FeatureCard
-            icon={<ShieldCheck className="w-6 h-6 text-red-500" />}
-            title="Secure Login"
-            description="Verified through official Discord OAuth2 for maximum security."
-          />
-          <FeatureCard
-            icon={<GraduationCap className="w-6 h-6 text-red-500" />}
-            title="Instant Roles"
-            description="Get your Discord roles assigned automatically upon success."
-          />
+            {!user ? (
+              <button
+                onClick={handleLogin}
+                className="group relative px-8 py-5 bg-[#5865F2] text-white text-xl font-bold rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-6 h-6 fill-current" />
+                  Log in with Discord
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+            ) : (
+              <div className="bg-white p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(89,28,11,0.1)] border-2 border-[#591C0B]/10 w-full max-w-md">
+                <div className="flex items-center gap-4 mb-6">
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="Current User"
+                    className="w-14 h-14 rounded-full border-2 border-amber-500"
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Logged in as</p>
+                    <p className="font-bold text-lg text-[#591C0B]">{user.user_metadata.full_name}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="ml-auto text-xs font-bold text-gray-400 hover:text-red-500"
+                  >
+                    Logout
+                  </button>
+                </div>
+
+                <a
+                  href="/verify"
+                  className="block w-full text-center py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black"
+                >
+                  Start Verification
+                </a>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 text-sm text-[#8C6B5D]/80 font-medium bg-amber-100/50 px-4 py-2 rounded-full">
+              <ShieldCheck className="w-4 h-4" />
+              <span>We don't store your email. Ever.</span>
+            </div>
+          </div>
         </div>
       </main>
 
-      <footer className="mt-auto py-10 text-center text-gray-500 text-sm">
-        &copy; 2026 Brown Verification Portal. Not affiliated with Brown University.
+      <footer className="absolute bottom-4 w-full text-center text-[#8C6B5D]/40 text-xs font-bold">
+        NOT AFFILIATED WITH BROWN UNIVERSITY • PLEASE DON'T SUE US • WE JUST LIKE BEARS
       </footer>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }) {
-  return (
-    <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
-      <div className="mb-4">{icon}</div>
-      <h3 className="text-xl font-bold mb-2">{title}</h3>
-      <p className="text-gray-400 leading-relaxed text-sm">{description}</p>
     </div>
   );
 }

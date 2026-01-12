@@ -16,12 +16,12 @@ export async function POST(req) {
         // 1. Basic Validation
         if (!email || !email.toLowerCase().endsWith('@brown.edu')) {
             console.warn('[Verify Log] 400: Invalid email domain:', email);
-            return NextResponse.json({ message: 'Only @brown.edu emails are allowed. Please check for spelling errors.' }, { status: 400 });
+            return NextResponse.json({ message: 'Only @brown.edu emails are allowed. Are you lost, friend?' }, { status: 400 });
         }
 
         if (!userId) {
             console.error('[Verify Log] 400: Missing userId in request');
-            return NextResponse.json({ message: 'User ID is missing. Please re-login with Discord.' }, { status: 400 });
+            return NextResponse.json({ message: 'I can\'t tell who you are! Profile missing.' }, { status: 400 });
         }
 
         // 2. Check for Duplicate (Privacy Safe)
@@ -35,12 +35,12 @@ export async function POST(req) {
 
         if (checkError) {
             console.error('[Verify Log] Supabase Check Error:', checkError);
-            return NextResponse.json({ message: 'Database error while checking email status.' }, { status: 500 });
+            return NextResponse.json({ message: 'Bear brain freeze (Database error).' }, { status: 500 });
         }
 
         if (existing) {
             console.warn('[Verify Log] 400: Duplicate email hash detected');
-            return NextResponse.json({ message: 'This email has already been used to verify a student.' }, { status: 400 });
+            return NextResponse.json({ message: 'That email is already verified! No double-dipping!' }, { status: 400 });
         }
 
         // 3. Generate Code
@@ -61,7 +61,7 @@ export async function POST(req) {
 
         if (dbError) {
             console.error('[Verify Log] Supabase Upsert Error:', dbError);
-            return NextResponse.json({ message: 'Failed to store verification code in database.', error: dbError.message }, { status: 500 });
+            return NextResponse.json({ message: 'Failed to put the code in the vault.', error: dbError.message }, { status: 500 });
         }
 
         console.log('[Verify Log] Code saved! Preparing to send email...');
@@ -69,24 +69,25 @@ export async function POST(req) {
         // 5. Send Email via Resend
         if (!process.env.RESEND_API_KEY) {
             console.error('[Verify Log] 500: Missing RESEND_API_KEY in environment');
-            return NextResponse.json({ message: 'Email service not configured.' }, { status: 500 });
+            return NextResponse.json({ message: 'Carrier pigeons unconfigured.' }, { status: 500 });
         }
 
         try {
-            // Note: If you have a custom domain verified in Resend, 
-            // you should change 'onboarding@resend.dev' to 'verify@yourdomain.com'
             const { data, error: resendError } = await resend.emails.send({
-                from: 'Verification Bot <verify@brunov.juainny.com>',
+                from: 'Bruno Verifies <verify@brunov.juainny.com>',
                 to: email,
-                subject: 'Your Brown Verification Code',
+                subject: 'Bruno\'s Secret Code for You',
                 html: `
-                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                      <h2 style="color: #ef4444;">Brown University Verification</h2>
-                      <p>Hello! Use the code below to verify your account in the Discord server.</p>
-                      <div style="background: #f4f4f4; padding: 20px; text-align: center; border-radius: 5px; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #FDFBF7; border-radius: 20px; text-align: center;">
+                      <h1 style="color: #591C0B; font-size: 28px;">Verification Time! 🐻</h1>
+                      <p style="font-size: 16px; color: #4A3728;">Hi friend! Grab this code to enter the Brown discord:</p>
+                      
+                      <div style="background: #FFF; border: 2px dashed #CE1126; padding: 20px; text-align: center; border-radius: 12px; font-size: 36px; font-weight: 800; letter-spacing: 5px; margin: 30px auto; color: #CE1126; max-width: 200px;">
                         ${code}
                       </div>
-                      <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
+                      
+                      <p style="color: #8C6B5D; font-size: 14px;">This code self-destructs (expires) in 10 minutes.</p>
+                      <p style="color: #8C6B5D; font-size: 12px; margin-top: 40px;">- Bruno the Bear</p>
                     </div>
                 `,
             });
@@ -94,7 +95,7 @@ export async function POST(req) {
             if (resendError) {
                 console.error('[Verify] Resend Error details:', resendError);
                 return NextResponse.json({
-                    message: 'Resend failed to send email. Check your domain verification.',
+                    message: 'The pigeon got lost (Email failed).',
                     error: resendError.message
                 }, { status: 500 });
             }
@@ -107,46 +108,8 @@ export async function POST(req) {
     } catch (error) {
         console.error('[Verify] Global 500 Error:', error);
         return NextResponse.json({
-            message: 'Internal server error.',
+            message: 'Internal bear error.',
             error: error.message
-        }, { status: 500 });
-    }
-}
-
-// DEBUG GET: Visit /api/verify/request in your browser to check Resend connection
-export async function GET() {
-    try {
-        if (!process.env.RESEND_API_KEY) {
-            return NextResponse.json({
-                status: 'Error',
-                message: 'RESEND_API_KEY is missing from environment variables.'
-            }, { status: 500 });
-        }
-
-        let domainResponse;
-        try {
-            domainResponse = await resend.domains.list();
-        } catch (e) {
-            domainResponse = { error: { message: e.message } };
-        }
-
-        const isRestricted = domainResponse.error?.name === 'restricted_api_key';
-
-        return NextResponse.json({
-            status: 'Diagnostic Info',
-            resend_api_configured: true,
-            api_key_prefix: process.env.RESEND_API_KEY.substring(0, 5) + '...',
-            key_status: isRestricted ? 'Restricted (Send-Only)' : 'Full Access or Other',
-            current_from_domain: 'brunov.juainny.com',
-            raw_resend_error: domainResponse.error || null,
-            advice: isRestricted
-                ? 'Your API key is restricted to SENDING ONLY. This is fine, but make sure you have added brunov.juainny.com as a verified domain in Resend and that your key is allowed to send from it.'
-                : 'Check if your domain is verified in the Resend Dashboard.'
-        });
-    } catch (err) {
-        return NextResponse.json({
-            status: 'Exception',
-            message: err.message
         }, { status: 500 });
     }
 }
