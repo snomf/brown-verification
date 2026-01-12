@@ -13,39 +13,34 @@ export async function POST(req) {
         const signature = req.headers.get('x-signature-ed25519');
         const timestamp = req.headers.get('x-signature-timestamp');
         const body = await req.text();
+        const publicKey = process.env.DISCORD_PUBLIC_KEY?.trim();
 
-        console.log('[Discord Debug] Interaction Start');
-        console.log('[Discord Debug] Headers - Signature:', signature ? 'Present' : 'Missing');
-        console.log('[Discord Debug] Headers - Timestamp:', timestamp ? 'Present' : 'Missing');
-        console.log('[Discord Debug] Env - Public Key (first 5):', process.env.DISCORD_PUBLIC_KEY ? process.env.DISCORD_PUBLIC_KEY.substring(0, 5) + '...' : 'MISSING');
+        console.log('[Discord Debug] Interaction Request Received');
+        console.log('[Discord Debug] Headers:', { signature: !!signature, timestamp: !!timestamp });
+        console.log('[Discord Debug] Body Length:', body.length);
+        console.log('[Discord Debug] Public Key Check:', publicKey ? publicKey.substring(0, 5) + '...' : 'MISSING');
 
-        if (!signature || !timestamp) {
-            console.error('[Discord Debug] Verification failed: Missing headers');
+        if (!signature || !timestamp || !publicKey) {
+            console.error('[Discord Debug] Verification failed: Missing headers or Public Key');
             return new Response('Bad request signature', { status: 401 });
         }
 
-        // Security Check: Ensure Public Key is present
-        if (!process.env.DISCORD_PUBLIC_KEY) {
-            console.error('[Discord Debug] Verification failed: Missing DISCORD_PUBLIC_KEY in Environment');
-            return new Response('Configuration Error', { status: 500 });
+        // 1. Verify Request Source (Security)
+        let isValidRequest = false;
+        try {
+            isValidRequest = await verifyKey(body, signature, timestamp, publicKey);
+        } catch (err) {
+            console.error('[Discord Debug] verifyKey exception:', err.message);
         }
 
-        // 1. Verify Request Source (Security)
-        const isValidRequest = verifyKey(
-            body,
-            signature,
-            timestamp,
-            process.env.DISCORD_PUBLIC_KEY
-        );
-
-        console.log('[Discord Debug] Verification Success:', isValidRequest);
+        console.log('[Discord Debug] Verification Result:', isValidRequest);
 
         if (!isValidRequest) {
-            console.warn('[Discord Debug] Verification failed: Invalid signature');
             return new Response('Bad request signature', { status: 401 });
         }
 
         const interaction = JSON.parse(body);
+        console.log('[Discord Debug] Interaction Type:', interaction.type);
 
         // 2. Handle Handshake (required by Discord)
         if (interaction.type === InteractionType.PING) {
