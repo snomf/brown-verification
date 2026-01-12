@@ -98,3 +98,30 @@ export async function POST(req) {
         }, { status: 500 });
     }
 }
+
+// DEBUG GET: Visit /api/verify/request in your browser to check Resend connection
+export async function GET() {
+    try {
+        if (!process.env.RESEND_API_KEY) {
+            return NextResponse.json({
+                status: 'Error',
+                message: 'RESEND_API_KEY is missing from environment variables.'
+            }, { status: 500 });
+        }
+
+        const { data, error } = await resend.domains.list();
+
+        return NextResponse.json({
+            status: 'Diagnostic Info',
+            resend_api_configured: true,
+            api_key_prefix: process.env.RESEND_API_KEY.substring(0, 5) + '...',
+            domains_found: data || [],
+            error_from_resend: error || null
+        });
+    } catch (err) {
+        return NextResponse.json({
+            status: 'Exception',
+            message: err.message
+        }, { status: 500 });
+    }
+}
