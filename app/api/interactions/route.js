@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { hashEmail } from '@/lib/crypto';
 import { assignRole, logToChannel } from '@/lib/discord';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
     const signature = req.headers.get('x-signature-ed25519');
@@ -76,21 +78,21 @@ export async function POST(req) {
 
             if (dbError) throw dbError;
 
-            // Send Email
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS,
-                },
-            });
-
-            await transporter.sendMail({
-                from: `"Brown Verification" <${process.env.EMAIL_USER}>`,
+            // Send Email via Resend
+            await resend.emails.send({
+                from: 'Verification Bot <onboarding@resend.dev>', // You should use your own domain eventually
                 to: email,
                 subject: 'Your Discord Verification Code',
-                text: `Your code is: ${code}. Use /confirm code: ${code} in Discord to verify.`,
-                html: `<div style="padding: 20px; text-align: center;"><h1>Code: ${code}</h1></div>`,
+                html: `
+          <div style="font-family: sans-serif; padding: 20px;">
+            <h2 style="color: #ef4444;">Brown University Verification</h2>
+            <p>Your verification code is:</p>
+            <div style="background: #f4f4f4; padding: 20px; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 5px;">
+              ${code}
+            </div>
+            <p>Type <strong>/confirm code: ${code}</strong> in Discord to verify.</p>
+          </div>
+        `,
             });
 
             return NextResponse.json({
