@@ -189,6 +189,7 @@ export async function POST(req) {
                     await supabase.from('verifications').insert({
                         discord_id: discordUserId,
                         email_hash: pending.email_hash,
+                        verification_method: 'command'
                     });
 
                     await supabase.from('pending_codes').delete().eq('discord_id', discordUserId);
@@ -197,7 +198,7 @@ export async function POST(req) {
 
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '✅ **Success!** You have been verified and assigned the student role. Welcome to the server!', flags: 64 },
+                        data: { content: '✅ **Success!** You have been verified and assigned the accepted role. Welcome to the server brownie!', flags: 64 },
                     });
                 } catch (err) {
                     console.error('[Error] Role Assignment Failed:', err);

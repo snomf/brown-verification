@@ -62,7 +62,8 @@ export async function POST(req) {
         // Transfer the hash to the permanent table
         await supabase.from('verifications').insert({
             discord_id: userId,
-            email_hash: pending.email_hash
+            email_hash: pending.email_hash,
+            verification_method: 'website'
         });
 
         // Cleanup: Clear pending code
@@ -70,13 +71,8 @@ export async function POST(req) {
 
         // Log to a Discord Webhook
         if (process.env.DISCORD_LOG_WEBHOOK) {
-            await fetch(process.env.DISCORD_LOG_WEBHOOK, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    content: `✅ **User Verified**: <@${discordUserId}> has been successfully verified!`,
-                }),
-            });
+            const { logToChannel } = await import('@/lib/discord');
+            await logToChannel(discordUserId, 'website');
         }
 
         return NextResponse.json({ message: 'Success!' });
