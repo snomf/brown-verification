@@ -15,13 +15,7 @@ export async function POST(req) {
         const body = await req.text();
         const publicKey = process.env.DISCORD_PUBLIC_KEY?.trim();
 
-        console.log('[Discord Debug] Interaction Request Received');
-        console.log('[Discord Debug] Headers:', { signature: !!signature, timestamp: !!timestamp });
-        console.log('[Discord Debug] Body Length:', body.length);
-        console.log('[Discord Debug] Public Key Check:', publicKey ? publicKey.substring(0, 5) + '...' : 'MISSING');
-
         if (!signature || !timestamp || !publicKey) {
-            console.error('[Discord Debug] Verification failed: Missing headers or Public Key');
             return new Response('Bad request signature', { status: 401 });
         }
 
@@ -33,18 +27,14 @@ export async function POST(req) {
             console.error('[Discord Debug] verifyKey exception:', err.message);
         }
 
-        console.log('[Discord Debug] Verification Result:', isValidRequest);
-
         if (!isValidRequest) {
             return new Response('Bad request signature', { status: 401 });
         }
 
         const interaction = JSON.parse(body);
-        console.log('[Discord Debug] Interaction Type:', interaction.type);
 
         // 2. Handle Handshake (required by Discord)
         if (interaction.type === InteractionType.PING) {
-            console.log('[Discord] PING received, sending PONG');
             return NextResponse.json({ type: InteractionResponseType.PONG });
         }
 
@@ -63,9 +53,21 @@ export async function POST(req) {
             // --- CASE: /verify [email] ---
             if (name === 'verify') {
                 const emailOption = options.find((o) => o.name === 'email');
-                const email = emailOption?.value;
+                let email = emailOption?.value?.trim().toLowerCase();
 
-                if (!email || !email.toLowerCase().endsWith('@brown.edu')) {
+                if (!email) {
+                    return NextResponse.json({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: { content: '<:bearbear:1458612533492711434> Give me a name or email to sniff!', flags: 64 },
+                    });
+                }
+
+                // Auto-append @brown.edu if no domain is provided
+                if (!email.includes('@')) {
+                    email = `${email}@brown.edu`;
+                }
+
+                if (!email.endsWith('@brown.edu')) {
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                         data: { content: '<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** email! Are you sure you\'re in the right place?', flags: 64 },
@@ -105,17 +107,7 @@ export async function POST(req) {
                     }, { onConflict: 'discord_id' });
 
                 if (dbError) {
-                    console.error('[Error] Supabase Error:', dbError);
                     throw dbError;
-                }
-
-                // Send Email via Resend
-                if (!process.env.RESEND_API_KEY) {
-                    console.error('[Error] Missing RESEND_API_KEY');
-                    return NextResponse.json({
-                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '<:BearShock:1460381158134120529> My carrier pigeons are on strike (Server Config Error). Tell an admin!', flags: 64 },
-                    });
                 }
 
                 try {
@@ -126,7 +118,7 @@ export async function POST(req) {
                         html: `
                           <div style="font-family: sans-serif; padding: 20px; text-align: center;">
                             <h1 style="color: #591C0B;">Bruno sent you a code! 🐻</h1>
-                            <p>You asked to verify your Brown status. Here is the magic key:</p>
+                            <p>Hi Brunonian! Grab this code to verify your acceptance:</p>
                             <div style="background: #FDFBF7; color: #CE1126; padding: 20px; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 5px; border: 2px dashed #591C0B; border-radius: 15px; margin: 20px auto; max-width: 300px;">
                               ${code}
                             </div>
@@ -139,7 +131,6 @@ export async function POST(req) {
                     });
 
                     if (resendError) {
-                        console.error('[Resend Error]:', resendError);
                         return NextResponse.json({
                             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                             data: {
@@ -149,7 +140,6 @@ export async function POST(req) {
                         });
                     }
                 } catch (emailErr) {
-                    console.error('[Error] Email sending failed Exception:', emailErr);
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                         data: { content: '<:BearShock:1460381158134120529> I tripped and dropped the email! Please try again later.', flags: 64 },
@@ -159,7 +149,7 @@ export async function POST(req) {
                 return NextResponse.json({
                     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                     data: {
-                        content: '<:bearbear:1458612533492711434> I sent a carrier pigeon (email) to your inbox! When you get the code, type `/confirm code: [your-code]`.\n\n🔒 [Privacy Policy](https://brunov.juainny.com/privacy)',
+                        content: `<:bearbear:1458612533492711434> I sent my pigeon friend to **${email}**! When you get the code, type \`/confirm code: [your-code]\`.\n\n🔒 [Privacy Policy](https://brunov.juainny.com/privacy)`,
                         flags: 64
                     },
                 });
@@ -207,10 +197,9 @@ export async function POST(req) {
 
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '<:Verified:1460379061816787139> **You\'re in!** I\'ve sniffed you out and you\'re legit. Welcome to the sleuth! <:Brown:1449845697506705501>', flags: 64 },
+                        data: { content: '<:Verified:1460379061816787139> **You\'re in!** I\'ve sniffed you out and you\'re legit. Welcome to the sleuth Brunonian! <:Brown:1449845697506705501>', flags: 64 },
                     });
                 } catch (err) {
-                    console.error('[Error] Role Assignment Failed:', err);
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                         data: { content: '<:BearShock:1460381158134120529> I verified you, but I couldn\'t give you the role! Yell at an admin!', flags: 64 },

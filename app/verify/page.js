@@ -10,7 +10,8 @@ import Link from 'next/link';
 
 export default function Verify() {
     const [user, setUser] = useState(null);
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [fullEmail, setFullEmail] = useState('');
     const [code, setCode] = useState('');
     const [step, setStep] = useState('email'); // 'email' | 'code' | 'success'
     const [loading, setLoading] = useState(false);
@@ -18,9 +19,6 @@ export default function Verify() {
 
     // Explicit bear message override when needed
     const [customBearMessage, setCustomBearMessage] = useState(null);
-
-    // Messages for steps
-    const [emailStepMsg, setEmailStepMsg] = useState("What's your email?");
 
     const router = useRouter();
 
@@ -34,15 +32,6 @@ export default function Verify() {
             }
         };
         checkUser();
-
-        // Randomize the initial question
-        setEmailStepMsg(getRandomMessage('greetings').replace("Hi there! I'm Bruno. ", ""));
-        // Note: 'greetings' might not be perfectly fit for "What's your email?" context if we don't curate it, 
-        // but let's stick to the user's request for randomness. 
-        // Actually, let's just make sure the logged-in message is personalized in the previous screen. 
-        // Here, the bear is asking for data.
-        // Let's us a simple randomizer for "What's your email?" variations if we want, or stick to the direct question.
-        // The user asked for "random messages" generally.
     }, [router]);
 
     const handleRequestCode = async (e) => {
@@ -51,19 +40,21 @@ export default function Verify() {
         setError(null);
         setCustomBearMessage(null);
 
+        const emailToVerify = `${username.trim()}@brown.edu`;
+        setFullEmail(emailToVerify);
+
         try {
             const res = await fetch('/api/verify/request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, userId: user.id }),
+                body: JSON.stringify({ email: emailToVerify, userId: user.id }),
             });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to send code');
 
             setStep('code');
-            // Use random message with email param
-            setCustomBearMessage(getRandomMessage('codeSent', { email: email }));
+            setCustomBearMessage(getRandomMessage('codeSent', { email: emailToVerify }));
         } catch (err) {
             setError(err.message);
             setCustomBearMessage(getRandomMessage('error'));
@@ -92,7 +83,7 @@ export default function Verify() {
             setCustomBearMessage(getRandomMessage('success', { name: user.user_metadata.full_name }));
         } catch (err) {
             setError(err.message);
-            setCustomBearMessage(err.message); // Specific error is often better than random for code failure
+            setCustomBearMessage(err.message);
         } finally {
             setLoading(false);
         }
@@ -122,41 +113,40 @@ export default function Verify() {
             </div>
 
             <div className="w-full max-w-3xl flex flex-col items-center">
-                {/* We use BrunoBear to wrap the entire form interaction now */}
                 <BrunoBear
                     state={step === 'email' ? 'loggedIn' : step === 'code' ? 'codeSent' : 'success'}
                     customMessage={null}
                 >
-                    {/* The content inside the bear's bubble */}
                     <div className="py-2">
                         {step === 'email' && (
                             <form onSubmit={handleRequestCode} className="space-y-4">
                                 <div>
                                     <h2 className="text-2xl font-black text-[#591C0B] mb-1">
-                                        {/* Use explicit string here for clarity, or randomize if desired. 
-                                            For input forms, clarity is usually key. 
-                                            "What's your email?" is safe.
-                                        */}
-                                        {customBearMessage || "What's your email?"}
+                                        {customBearMessage || "What's your Brown username?"}
                                     </h2>
-                                    <p className="text-[#8C6B5D] text-sm mb-4">I need it to verify you're a student.</p>
+                                    <p className="text-[#8C6B5D] text-sm mb-4">Just the part before the @brown.edu!</p>
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <input
-                                        type="email"
-                                        placeholder="josiah_carberry@brown.edu"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="flex-1 bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl px-4 py-3 text-lg font-medium outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-300"
-                                        required
-                                        autoFocus
-                                    />
+                                <div className="flex flex-col gap-3">
+                                    <div className="relative flex items-center">
+                                        <input
+                                            type="text"
+                                            placeholder="josiah_carberry"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value.split('@')[0])}
+                                            className="w-full bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl pl-4 pr-32 py-4 text-lg font-medium outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-300"
+                                            required
+                                            autoFocus
+                                        />
+                                        <span className="absolute right-4 text-gray-400 font-bold pointer-events-none">
+                                            @brown.edu
+                                        </span>
+                                    </div>
                                     <button
-                                        disabled={loading}
-                                        className="px-6 py-3 bg-[#CE1126] text-white font-bold rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black"
+                                        disabled={loading || !username.trim()}
+                                        className="w-full py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black flex items-center justify-center gap-2"
                                     >
-                                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-5 h-5" />}
+                                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Send className="w-5 h-5" /> Send Verification Code</>}
                                     </button>
                                 </div>
                                 {error && <p className="text-red-500 font-bold text-sm bg-red-100 p-2 rounded-lg">{error}</p>}
@@ -168,7 +158,7 @@ export default function Verify() {
                                 <div>
                                     <h2 className="text-2xl font-black text-[#591C0B] mb-1">{customBearMessage || "Check your inbox!"}</h2>
                                     <p className="text-[#8C6B5D] text-sm mb-4">
-                                        I sent a code to <span className="text-[#CE1126] font-bold">{email}</span>
+                                        I sent a code to <span className="text-[#CE1126] font-bold">{fullEmail}</span>
                                     </p>
                                 </div>
 
@@ -215,7 +205,7 @@ export default function Verify() {
                                             {customBearMessage || "You're In!"}
                                         </h2>
                                         <p className="text-[#8C6B5D] font-medium leading-tight">
-                                            Role assigned. You're now a verified Brownie.
+                                            Role assigned. You're now a verified Brunonian.
                                         </p>
                                     </div>
                                 </div>
