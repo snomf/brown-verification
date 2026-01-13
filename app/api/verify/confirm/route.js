@@ -63,7 +63,8 @@ export async function POST(req) {
         await supabase.from('verifications').insert({
             discord_id: userId,
             email_hash: pending.email_hash,
-            verification_method: 'website'
+            verification_method: 'website',
+            verified_at: new Date().toISOString()
         });
 
         // Cleanup: Clear pending code

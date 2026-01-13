@@ -55,7 +55,7 @@ client.once('ready', () => {
     console.log('Bruno is ONLINE. Sniffing for logs...');
 
     client.user.setPresence({
-        activities: [{ name: 'Brown Students...', type: 3 }],
+        activities: [{ name: 'Brown Students that want to verify', type: 2 }],
         status: 'online',
     });
 });
@@ -184,7 +184,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             console.log(`[Bruno Log] Email successfully queued/sent. Resend ID: ${resendResponse.data?.id}`);
-            await interaction.editReply(`<:bearbear:1458612533492711434> I sent my pigeon friend to your Brown email! Please check your inbox. Then, use the /confirm command with the code I sent you.`);
+            await interaction.editReply('<:bearbear:1458612533492711434> I sent my pigeon friend to your **Brown email**! Please **check your inbox**. Then, use the `/confirm` command with the code I sent you.\n\nCheck our [Privacy Policy](https://brunov.juainny.com/privacy)');
         } catch (err) {
             console.error('[Bruno Error] /verify handler exception:', err);
             await interaction.editReply('Error! My pigeons are on strike and my email was not sent. Try again later.');
@@ -222,15 +222,20 @@ client.on('interactionCreate', async interaction => {
             console.log(`[Bruno Log] Assigned role to ${discordUserId}`);
 
             // Persist Verification
+            console.log(`[Bruno Log] Attempting to save verification for ${discordUserId}...`);
             const { error: insertError } = await supabase.from('verifications').insert({
                 discord_id: discordUserId,
                 email_hash: pending.email_hash,
-                verification_method: 'command'
+                verification_method: 'command',
+                verified_at: new Date().toISOString()
             });
 
             if (insertError) {
                 console.error('[Bruno Error] Failed to log verification to DB:', insertError);
+                return interaction.editReply('<:BearShock:1460381158134120529> I gave you the role, but my database brain is full! I couldn\'t save your record. Please let an admin know!');
             }
+
+            console.log(`[Bruno Log] Saved verification for ${discordUserId} to Supabase.`);
 
             // Cleanup & Webhook
             await supabase.from('pending_codes').delete().eq('discord_id', discordUserId);
@@ -245,6 +250,17 @@ client.on('interactionCreate', async interaction => {
         }
     }
 });
+
+// Startup Test
+(async () => {
+    try {
+        const { data, error } = await supabase.from('pending_codes').select('count', { count: 'exact', head: true });
+        if (error) throw error;
+        console.log('[Bruno Log] Supabase connectivity verified.');
+    } catch (err) {
+        console.error('[Bruno Error] Supabase test failed:', err.message);
+    }
+})();
 
 if (!process.env.DISCORD_BOT_TOKEN) {
     console.error('CRITICAL ERROR: DISCORD_BOT_TOKEN is missing!');

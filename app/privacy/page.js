@@ -46,10 +46,10 @@ export default function PrivacyPage() {
                 <div className="space-y-12 text-gray-300 leading-relaxed text-lg">
                     <section>
                         <p className="text-xl font-medium text-white mb-4">
-                            We take your privacy seriously. The best way to keep data safe is to <span className="text-red-400 underline decoration-wavy">never verify or store it in the first place</span>.
+                            We take your privacy very <span className="text-red-400 underline decoration-wavy">seriously.</span>.
                         </p>
                         <p>
-                            This service exists solely to connect your Discord account to your Brown University identity so you can access the server. Once that link is established, we want to forget who you are as quickly as possible.
+                            This service exists solely to connect your Discord account to your Brown University email so you can get your role. Once that link is established, we would prefer forget who you are as quickly as possible, we don't care.
                         </p>
                     </section>
 
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
                             The Hashing Machine
                         </h2>
                         <p className="mb-6">
-                            We do not save your email address in our database. Instead, we run it through a cryptographic function called <strong>SHA-256</strong>. This creates a one-way "hash" or fingerprint. We save this fingerprint to ensure one email equals one Discord account, but we can't reverse it to find out your real email.
+                            We do not save your email address in our database. Instead, we run it through a cryptographic function called <strong>SHA-256</strong>. This creates a one-way "hash." We save this fingerprint to ensure one email equals one Discord account, but we <strong>can't</strong> reverse it at all.
                         </p>
 
                         {/* Interactive Demo */}
@@ -98,15 +98,15 @@ export default function PrivacyPage() {
                         <ul className="grid gap-4">
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-green-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full"></div></div>
-                                <span>We <strong>NEVER</strong> store your Brown password. (We don't even ask for it!)</span>
+                                <span>We <strong>NEVER</strong> store your Brown password. (We don't even ask for it, so we can't)</span>
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-green-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full"></div></div>
-                                <span>We <strong>NEVER</strong> sell or share your data with 3rd parties.</span>
+                                <span>We <strong>NEVER</strong> sell or share your data with 3rd parties. (We don't even know how to)</span>
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-green-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full"></div></div>
-                                <span>We <strong>DO NOT</strong> read your Discord DMs.</span>
+                                <span>We <strong>DO NOT</strong> read your Discord DMs. You can see what we have access to when you log in..</span>
                             </li>
                         </ul>
                     </section>

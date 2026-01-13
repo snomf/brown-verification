@@ -7,3 +7,8 @@ README.md
 ENV_TEMPLATE.txt
 .antigravityignore
 brain
+.vscode
+.DS_Store
+*.md
+.next/*
+node_modules/*
