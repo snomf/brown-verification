@@ -11,11 +11,11 @@ export async function POST(req) {
         const body = await req.json();
         const { email, userId } = body;
 
-        console.log('[Verify Log] Received data:', { email, userId: userId ? 'Present' : 'MISSING' });
+        console.log('[Verify Log] Received data:', { email: 'HIDDEN', userId: userId ? 'Present' : 'MISSING' });
 
         // 1. Basic Validation
         if (!email || !email.toLowerCase().endsWith('@brown.edu')) {
-            console.warn('[Verify Log] 400: Invalid email domain:', email);
+            console.warn('[Verify Log] 400: Invalid email domain (PII hidden)');
             return NextResponse.json({ message: 'Only @brown.edu emails are allowed. Are you lost, friend?' }, { status: 400 });
         }
 

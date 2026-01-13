@@ -80,7 +80,7 @@ export default function Verify() {
             if (!res.ok) throw new Error(data.message || 'Invalid code');
 
             setStep('success');
-            setCustomBearMessage(getRandomMessage('success', { name: user.user_metadata.full_name }));
+            setCustomBearMessage(getRandomMessage('success', { name: user?.user_metadata?.full_name || user?.user_metadata?.name || 'Friend' }));
         } catch (err) {
             setError(err.message);
             setCustomBearMessage(err.message);

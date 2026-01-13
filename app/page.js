@@ -130,13 +130,13 @@ export default function Home() {
                 <>
                   <div className="flex items-center gap-4 mb-2">
                     <img
-                      src={user.user_metadata.avatar_url}
+                      src={user?.user_metadata?.avatar_url || ''}
                       alt="Current User"
                       className="w-12 h-12 rounded-full border-2 border-amber-500 shadow-md"
                     />
                     <div className="text-left">
-                      <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Welcome back,</p>
-                      <p className="font-bold text-[#591C0B]">{user.user_metadata.full_name}</p>
+                      <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Hello,</p>
+                      <p className="font-bold text-[#591C0B]">{user?.user_metadata?.full_name || user?.user_metadata?.name || 'Friend'}</p>
                     </div>
                   </div>
                   <h2 className="text-2xl font-black text-[#591C0B] min-h-[4rem] flex items-center justify-center md:justify-start leading-tight">
@@ -164,7 +164,7 @@ export default function Home() {
       </main>
 
       <footer className="w-full text-center p-8 text-[#8C6B5D]/40 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em]">
-        NOT AFFILIATED WITH BROWN UNIVERSITY • PROTECTED BY BRUNO THE BEAR • © 2026 BRUNO VERIFIES
+        NOT AFFILIATED WITH BROWN UNIVERSITY • PROTECTED BY BRUNO THE BEAR, OF COURSE • © 2026 BRUNO VERIFIES, JUAINNY.COM
       </footer>
     </div>
   );

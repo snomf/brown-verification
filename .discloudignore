@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.gitignore
+package-lock.json
+README.md
+ENV_TEMPLATE.txt
+.antigravityignore
+brain
