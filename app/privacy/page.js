@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, RefreshCw, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Lock, RefreshCw, ChevronRight, ArrowLeft, Github } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function PrivacyPage() {
@@ -112,8 +112,17 @@ export default function PrivacyPage() {
                     </section>
                 </div>
 
-                <footer className="mt-20 pt-10 border-t border-white/10 text-center text-gray-600 text-sm">
+                <footer className="mt-20 pt-10 border-t border-white/10 text-center text-gray-500 text-sm flex flex-col items-center gap-4">
                     <p>This page is open source.</p>
+                    <a
+                        href="https://github.com/snomf/brown-verification"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-white"
+                    >
+                        <Github className="w-4 h-4" />
+                        <span>View on GitHub</span>
+                    </a>
                 </footer>
             </div>
         </div>
