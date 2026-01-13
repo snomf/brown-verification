@@ -46,7 +46,7 @@ export default function PrivacyPage() {
                 <div className="space-y-12 text-gray-300 leading-relaxed text-lg">
                     <section>
                         <p className="text-xl font-medium text-white mb-4">
-                            We take your privacy very <span className="text-red-400 underline decoration-wavy">seriously.</span>.
+                            We take your privacy very <span className="text-red-400 underline decoration-wavy">seriously.</span>
                         </p>
                         <p>
                             This service exists solely to connect your Discord account to your Brown University email so you can get your role. Once that link is established, we would prefer forget who you are as quickly as possible, we don't care.
@@ -106,7 +106,7 @@ export default function PrivacyPage() {
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-green-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full"></div></div>
-                                <span>We <strong>DO NOT</strong> read your Discord DMs. You can see what we have access to when you log in..</span>
+                                <span>We <strong>DO NOT</strong> read your Discord DMs. You can see what we have access to when you log in.</span>
                             </li>
                         </ul>
                     </section>
