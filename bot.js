@@ -106,14 +106,14 @@ client.on('interactionCreate', async interaction => {
         await interaction.deferReply({ ephemeral: true });
 
         let email = options.getString('email')?.trim().toLowerCase();
-        if (!email) return interaction.editReply('Sniff... you forgot to give me an email!');
+        if (!email) return interaction.editReply('Sniff... you forgot to give me an email! Lets give that another try? <:bearbear:1458612533492711434>');
 
         if (!email.includes('@')) {
             email = `${email}@brown.edu`;
         }
 
         if (!email.endsWith('@brown.edu')) {
-            return interaction.editReply('<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** email!');
+            return interaction.editReply('<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** email! Are you really a brunonian? <:bearbear:1458612533492711434>');
         }
 
         try {
@@ -129,11 +129,11 @@ client.on('interactionCreate', async interaction => {
 
             if (checkError) {
                 console.error('[Bruno Error] Supabase Check Failed:', checkError);
-                return interaction.editReply('My database brain froze! Try again later.');
+                return interaction.editReply('My database brain froze! Pls try again later.');
             }
 
             if (existing) {
-                return interaction.editReply('<:BearShock:1460381158134120529> That email is already verified!\n\nCheck our [Privacy Policy](https://brunov.juainny.com/privacy)');
+                return interaction.editReply('<:BearShock:1460381158134120529> That email is already verified!\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy) and see how we manage that information.');
             }
 
             const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -163,7 +163,7 @@ client.on('interactionCreate', async interaction => {
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #FDFBF7; border-radius: 20px; text-align: center;">
                       <h1 style="color: #591C0B; font-size: 28px;">Verification Time! 🐻</h1>
-                      <p style="font-size: 16px; color: #4A3728;">Hi Brunonian! Grab this code to verify your acceptance:</p>
+                      <p style="font-size: 16px; color: #4A3728;">Hi Brunonian! We got your discord command, grab this code to verify your acceptance and get that role!:</p>
                       
                       <div style="background: #FFF; border: 2px dashed #CE1126; padding: 20px; text-align: center; border-radius: 12px; font-size: 36px; font-weight: 800; letter-spacing: 5px; margin: 30px auto; color: #CE1126; max-width: 200px;">
                         ${code}
@@ -172,7 +172,7 @@ client.on('interactionCreate', async interaction => {
                       <p style="color: #8C6B5D; font-size: 14px;">This code self-destructs (expires) in 10 minutes.</p>
                       <hr style="border: 0; border-top: 1px solid #CE1126; opacity: 0.2; margin: 30px 0;">
                       <p style="color: #8C6B5D; font-size: 12px;">
-                        <a href="https://brunov.juainny.com/privacy" style="color: #CE1126; text-decoration: none; font-weight: bold;">Privacy Policy</a> • We hashed your email to protect your identity.
+                        <a href="https://brunov.juainny.com/terms" style="color: #CE1126; text-decoration: none; font-weight: bold;">Terms</a> • <a href="https://brunov.juainny.com/privacy" style="color: #CE1126; text-decoration: none; font-weight: bold;">Privacy Policy</a> • We hashed your email to protect your identity.
                       </p>
                     </div>
                 `
@@ -184,7 +184,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             console.log(`[Bruno Log] Email successfully queued/sent. Resend ID: ${resendResponse.data?.id}`);
-            await interaction.editReply('<:bearbear:1458612533492711434> I sent my pigeon friend to your **Brown email**! Please **check your inbox**. Then, use the `/confirm` command with the code I sent you.\n\nCheck our [Privacy Policy](https://brunov.juainny.com/privacy)');
+            await interaction.editReply('<:bearbear:1458612533492711434> I sent my pigeon friend to your **Brown email**! Please **check your inbox**. Then, use the `/confirm` command with the code I sent you.\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy)');
         } catch (err) {
             console.error('[Bruno Error] /verify handler exception:', err);
             await interaction.editReply('Error! My pigeons are on strike and my email was not sent. Try again later.');
@@ -215,7 +215,7 @@ client.on('interactionCreate', async interaction => {
 
             if (!roleId) {
                 console.error('[Bruno Error] DISCORD_ROLE_ID is missing');
-                return interaction.editReply('I verified you, but I don\'t know what role to give! (Config Error)');
+                return interaction.editReply('I verified you, but I don\'t know what role to give! (Config Error, contact <@547599059024740374>)');
             }
 
             await member.roles.add(roleId);
@@ -232,7 +232,7 @@ client.on('interactionCreate', async interaction => {
 
             if (insertError) {
                 console.error('[Bruno Error] Failed to log verification to DB:', insertError);
-                return interaction.editReply('<:BearShock:1460381158134120529> I gave you the role, but my database brain is full! I couldn\'t save your record. Please let an admin know!');
+                return interaction.editReply('<:BearShock:1460381158134120529> I gave you the role, but my database brain is full! I couldn\'t save your record. Please let <@547599059024740374> know!');
             }
 
             console.log(`[Bruno Log] Saved verification for ${discordUserId} to Supabase.`);
@@ -243,10 +243,10 @@ client.on('interactionCreate', async interaction => {
             // Fire Webhook
             await logToChannel(discordUserId, 'command');
 
-            await interaction.editReply('<:Verified:1460379061816787139> You\'re verified!');
+            await interaction.editReply('<:Verified:1460379061816787139> You\'re verified, Bruno-approved, 100% bruninian, and ready to go!');
         } catch (err) {
             console.error('[Bruno Error] /confirm handler exception:', err);
-            await interaction.editReply('Error assigning role. Yell at an admin!');
+            await interaction.editReply('Error assigning role. Yell at <@547599059024740374>!');
         }
     }
 });

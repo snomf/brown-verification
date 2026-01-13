@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Send, Check, MessageSquare, Instagram, Shield } from 'lucide-react';
+import { ArrowLeft, Loader2, Send, Check, MessageSquare, Instagram, Shield, FileText } from 'lucide-react';
 import BrunoBear from '../components/BrunoBear';
 import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
@@ -126,6 +126,13 @@ export default function Verify() {
             </div>
 
             <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4">
+                <Link
+                    href="/terms"
+                    className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4 flex items-center gap-1"
+                >
+                    <FileText className="w-4 h-4" />
+                    Terms
+                </Link>
                 <Link
                     href="/privacy"
                     className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4 flex items-center gap-1"

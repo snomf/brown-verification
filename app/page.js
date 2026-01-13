@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { MessageSquare, Instagram, Shield } from 'lucide-react';
+import { MessageSquare, Instagram, Shield, FileText } from 'lucide-react';
 import BrunoBear from './components/BrunoBear';
 import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
@@ -60,7 +60,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#4A3728] font-sans selection:bg-amber-200 flex flex-col">
-
       {/* Social Sidebar/Floating */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
         <a
@@ -90,6 +89,13 @@ export default function Home() {
 
       <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4 items-center">
         <Link
+          href="/terms"
+          className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4 flex items-center gap-1"
+        >
+          <FileText className="w-4 h-4" />
+          Terms
+        </Link>
+        <Link
           href="/privacy"
           className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4 flex items-center gap-1"
         >
@@ -106,7 +112,7 @@ export default function Home() {
             Bruno Verifies
           </h1>
           <p className="text-lg text-[#8C6B5D] font-medium">
-            The friendliest way to get into the Discord.
+            The Bruno-certified way to get your accepted role.
           </p>
         </div>
 
@@ -136,7 +142,7 @@ export default function Home() {
                     />
                     <div className="text-left">
                       <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Hello,</p>
-                      <p className="font-bold text-[#591C0B]">{user?.user_metadata?.full_name || user?.user_metadata?.name || 'Friend'}</p>
+                      <p className="font-bold text-[#591C0B]">{user?.user_metadata?.full_name || user?.user_metadata?.name || 'Brunonian'}</p>
                     </div>
                   </div>
                   <h2 className="text-2xl font-black text-[#591C0B] min-h-[4rem] flex items-center justify-center md:justify-start leading-tight">
@@ -147,7 +153,7 @@ export default function Home() {
                       href="/verify"
                       className="flex-1 py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black text-center text-lg"
                     >
-                      Verify Me!
+                      Verify Meeee!
                     </a>
                     <button
                       onClick={handleLogout}
@@ -164,7 +170,15 @@ export default function Home() {
       </main>
 
       <footer className="w-full text-center p-8 text-[#8C6B5D]/40 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em]">
-        NOT AFFILIATED WITH BROWN UNIVERSITY • PROTECTED BY BRUNO THE BEAR, OF COURSE • © 2026 BRUNO VERIFIES, JUAINNY.COM
+        NOT AFFILIATED WITH BROWN UNIVERSITY • PROTECTED BY BRUNO THE BEAR, OF COURSE • © 2026 BRUNO VERIFIES,{' '}
+        <a
+          href="https://juainny.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-[#591C0B] transition-colors underline decoration-dotted underline-offset-2"
+        >
+          JUAINNY.COM
+        </a>
       </footer>
     </div>
   );
