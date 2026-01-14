@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env' });
 const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
 
 const commands = [
@@ -25,6 +25,18 @@ const commands = [
                 required: true,
                 max_length: 6,
                 min_length: 6,
+            },
+        ],
+    },
+    {
+        name: 'adminv',
+        description: 'Admin: Force verify a user (Bypass email)',
+        options: [
+            {
+                name: 'user',
+                description: 'The user to force verify',
+                type: ApplicationCommandOptionType.User,
+                required: true,
             },
         ],
     },

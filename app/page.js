@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { MessageSquare, Instagram, Shield, FileText } from 'lucide-react';
+import { Instagram, Shield, FileText } from 'lucide-react';
 import BrunoBear from './components/BrunoBear';
 import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
@@ -53,8 +53,11 @@ export default function Home() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amber-600"></div>
+    <div className="min-h-screen loading-gradient flex flex-col items-center justify-center gap-6">
+      <div className="relative">
+        <img src="/verified-bear.png" className="w-24 h-24 animate-spin-random" alt="Loading..." />
+      </div>
+      <p className="text-[#591C0B] font-black text-xl animate-pulse uppercase tracking-widest">Loading...</p>
     </div>
   );
 
@@ -66,10 +69,12 @@ export default function Home() {
           href="https://discord.gg/BxjyefMugy"
           target="_blank"
           rel="noopener noreferrer"
-          className="p-3 bg-white border-2 border-[#591C0B]/10 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-[#5865F2]"
+          className="p-3 bg-white border-2 border-[#591C0B]/10 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-[#5865F2] flex items-center justify-center"
           title="Join the Discord"
         >
-          <MessageSquare className="w-6 h-6 fill-current" />
+          <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 0-1.872-.892.077.077 0 0 1-.041-.128c.125-.094.252-.192.37-.29a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .077.01c.12.098.246.196.372.29a.077.077 0 0 1-.041.128 12.983 12.983 0 0 0-1.872.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z" />
+          </svg>
         </a>
         <a
           href="https://instagram.com/gusfringed"
@@ -84,7 +89,7 @@ export default function Home() {
 
       {/* Header */}
       <div className="absolute top-6 left-6 md:top-10 md:left-10 z-50">
-        <img src="/brown-crest.png" alt="Brown University" className="w-16 h-auto opacity-80 hover:opacity-100 transition-opacity" />
+        <img src="/verified-bear.png" alt="Bruno Verifies" className="w-16 h-auto drop-shadow-sm hover:scale-110 transition-transform cursor-pointer" onClick={() => window.location.href = '/'} />
       </div>
 
       <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4 items-center">
@@ -128,7 +133,9 @@ export default function Home() {
                     onClick={handleLogin}
                     className="w-full group relative px-8 py-4 bg-[#5865F2] text-white text-lg font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black flex items-center justify-center gap-3 cursor-pointer"
                   >
-                    <MessageSquare className="w-6 h-6 fill-current" />
+                    <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 0-1.872-.892.077.077 0 0 1-.041-.128c.125-.094.252-.192.37-.29a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .077.01c.12.098.246.196.372.29a.077.077 0 0 1-.041.128 12.983 12.983 0 0 0-1.872.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z" />
+                    </svg>
                     <span>Get Your Role</span>
                   </button>
                 </>

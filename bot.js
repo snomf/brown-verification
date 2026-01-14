@@ -70,9 +70,14 @@ async function logToChannel(discordUserId, method = 'command') {
     }
 
     try {
-        const methodText = method === 'command'
-            ? 'They have received their accepted role using the command.'
-            : 'They have received their accepted role using the website.';
+        let methodText;
+        if (method === 'command') {
+            methodText = 'They have received their accepted role using the command.';
+        } else if (method === 'admin') {
+            methodText = 'They were manually verified by an Admin.';
+        } else {
+            methodText = 'They have received their accepted role using the website.';
+        }
 
         await fetch(webhookUrl, {
             method: 'POST',
@@ -247,6 +252,71 @@ client.on('interactionCreate', async interaction => {
         } catch (err) {
             console.error('[Bruno Error] /confirm handler exception:', err);
             await interaction.editReply('Error assigning role. Yell at <@547599059024740374>!');
+        }
+    }
+
+    if (commandName === 'adminv') {
+        try {
+            // Immediate Defer to prevent timeout
+            await interaction.deferReply({ ephemeral: false });
+
+            const allowedRoles = ['1449820726407467190', '1442356190209380373'];
+            const rolesObj = interaction.member?.roles;
+            // Handle both GuildMember (manager) and API (array)
+            const memberRoles = Array.isArray(rolesObj)
+                ? rolesObj
+                : (rolesObj?.cache ? rolesObj.cache.map(r => r.id) : []);
+
+            const hasPermission = memberRoles.some(role => allowedRoles.includes(role));
+
+            if (!hasPermission) {
+                return interaction.editReply('<:BearShock:1460381158134120529> Roar! You are not authorized to use this command.');
+            }
+
+            const targetUser = options.getUser('user');
+            if (!targetUser) {
+                return interaction.editReply('Please specify a user to verify.');
+            }
+
+            const targetUserId = targetUser.id;
+            console.log(`[Bruno Log] Admin verify initiated for ${targetUserId} by ${interaction.user.tag}`);
+
+            // Force insert into Supabase
+            const { error: dbError } = await supabase.from('verifications').upsert({
+                discord_id: targetUserId,
+                verification_method: 'admin',
+                verified_at: new Date().toISOString(),
+                email_hash: 'admin_bypass_' + targetUserId
+            }, { onConflict: 'discord_id' });
+
+            if (dbError) {
+                console.error('[Bruno Error] Admin Verify DB Error:', dbError);
+                return interaction.editReply(`<:BearShock:1460381158134120529> Database error: ${dbError.message}`);
+            }
+
+            // Assign Role
+            const roleId = process.env.DISCORD_ROLE_ID;
+            if (!roleId) {
+                return interaction.editReply('Config Error: DISCORD_ROLE_ID is missing.');
+            }
+
+            const guild = await client.guilds.fetch(guildId);
+            const memberToVerify = await guild.members.fetch(targetUserId);
+
+            await memberToVerify.roles.add(roleId);
+            console.log(`[Bruno Log] Admin manually assigned role to ${targetUserId}`);
+
+            await logToChannel(targetUserId, 'admin');
+
+            await interaction.editReply(`<:Verified:1460379061816787139> **Success!** User <@${targetUserId}> has been forcibly verified.`);
+        } catch (err) {
+            console.error('[Bruno Error] Admin Verify Exception:', err);
+            // Check if we can still reply
+            if (interaction.deferred) {
+                await interaction.editReply(`<:BearShock:1460381158134120529> Failed to admin-verify: ${err.message}`);
+            } else {
+                await interaction.reply({ content: `<:BearShock:1460381158134120529> Failed to admin-verify: ${err.message}`, ephemeral: true }).catch(() => { });
+            }
         }
     }
 });

@@ -24,3 +24,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes spin-random {
+  0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.8, 0, 0.2, 1); }
+  25% { transform: rotate(180deg); animation-timing-function: cubic-bezier(0.1, 0.8, 0.9, 0.1); }
+  50% { transform: rotate(720deg); animation-timing-function: linear; }
+  75% { transform: rotate(1080deg); animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1); }
+  100% { transform: rotate(1440deg); }
+}
+
+.animate-spin-random {
+  animation: spin-random 2.5s infinite;
+}
+
+@keyframes gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.loading-gradient {
+  background: linear-gradient(-45deg, #FDFBF7, #fde68a, #fbbf24, #f59e0b);
+  background-size: 400% 400%;
+  animation: gradient-flow 5s ease infinite;
+}

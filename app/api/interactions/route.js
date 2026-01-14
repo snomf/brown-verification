@@ -40,7 +40,8 @@ export async function POST(req) {
 
         // 3. Handle Slash Commands
         if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-            const { name, options } = interaction.data;
+            const { name } = interaction.data;
+            const options = interaction.data.options || [];
             const discordUserId = interaction.member?.user?.id || interaction.user?.id;
 
             if (!discordUserId) {
@@ -194,7 +195,7 @@ export async function POST(req) {
 
                     await supabase.from('pending_codes').delete().eq('discord_id', discordUserId);
 
-                    await logToChannel(discordUserId, 'command');
+                    logToChannel(discordUserId, 'command').catch(console.error);
 
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -206,6 +207,72 @@ export async function POST(req) {
                         data: { content: '<:BearShock:1460381158134120529> I verified you, but I couldn\'t give you the role! Yell at an admin!', flags: 64 },
                     });
                 }
+            }
+
+            // --- CASE: /adminv [user] ---
+            if (name === 'adminv') {
+                const memberRoles = interaction.member?.roles || [];
+                const allowedRoles = ['1449820726407467190', '1442356190209380373'];
+                const hasPermission = memberRoles.some(role => allowedRoles.includes(role));
+
+                if (!hasPermission) {
+                    return NextResponse.json({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: { content: '<:BearShock:1460381158134120529> Roar! You are not authorized to use this command.', flags: 64 },
+                    });
+                }
+
+                const userOption = options.find((o) => o.name === 'user');
+                const targetUserId = userOption?.value;
+                const interactionToken = interaction.token;
+                const applicationId = process.env.DISCORD_CLIENT_ID;
+
+                if (!targetUserId) {
+                    return NextResponse.json({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: { content: 'Please specify a user to verify.', flags: 64 },
+                    });
+                }
+
+                // Run verification in background
+                (async () => {
+                    try {
+                        const { error: dbError } = await supabase.from('verifications').upsert({
+                            discord_id: targetUserId,
+                            verification_method: 'admin',
+                            verified_at: new Date().toISOString(),
+                            email_hash: 'admin_bypass_' + targetUserId
+                        }, { onConflict: 'discord_id' });
+
+                        if (dbError) throw dbError;
+
+                        await assignRole(targetUserId);
+                        logToChannel(targetUserId, 'admin').catch(console.error);
+
+                        // Update the deferred message
+                        await fetch(`https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                content: `<:Verified:1460379061816787139> **Success!** User <@${targetUserId}> has been forcibly verified.`
+                            })
+                        });
+                    } catch (err) {
+                        console.error('Admin Verify Error:', err);
+                        await fetch(`https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                content: `<:BearShock:1460381158134120529> Failed to admin-verify: ${err.message}`
+                            })
+                        });
+                    }
+                })();
+
+                // Return "Thinking..." immediately
+                return NextResponse.json({
+                    type: 5 // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+                });
             }
         }
 

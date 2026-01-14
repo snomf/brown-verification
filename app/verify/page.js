@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Send, Check, MessageSquare, Instagram, Shield, FileText } from 'lucide-react';
+import { ArrowLeft, Loader2, Send, Check, Instagram, Shield, FileText } from 'lucide-react';
 import BrunoBear from '../components/BrunoBear';
 import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
@@ -99,10 +99,12 @@ export default function Verify() {
                     href="https://discord.gg/BxjyefMugy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 bg-white border-2 border-[#591C0B]/10 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-[#5865F2]"
+                    className="p-3 bg-white border-2 border-[#591C0B]/10 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-[#5865F2] flex items-center justify-center"
                     title="Join the Discord"
                 >
-                    <MessageSquare className="w-6 h-6 fill-current" />
+                    <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 0-1.872-.892.077.077 0 0 1-.041-.128c.125-.094.252-.192.37-.29a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .077.01c.12.098.246.196.372.29a.077.077 0 0 1-.041.128 12.983 12.983 0 0 0-1.872.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z" />
+                    </svg>
                 </a>
                 <a
                     href="https://instagram.com/gusfringed"
@@ -176,7 +178,7 @@ export default function Verify() {
                                         disabled={loading || !username.trim()}
                                         className="w-full py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black flex items-center justify-center gap-2"
                                     >
-                                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Send className="w-5 h-5" /> Send Verification Code</>}
+                                        {loading ? <img src="/verified-bear.png" className="w-6 h-6 animate-spin-random" alt="Loading..." /> : <><Send className="w-5 h-5" /> Send Verification Code</>}
                                     </button>
                                 </div>
                                 {error && <p className="text-red-500 font-bold text-sm bg-red-100 p-2 rounded-lg">{error}</p>}
@@ -207,7 +209,7 @@ export default function Verify() {
                                         disabled={loading}
                                         className="px-6 py-3 bg-[#CE1126] text-white font-bold rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black"
                                     >
-                                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Check className="w-5 h-5" />}
+                                        {loading ? <img src="/verified-bear.png" className="w-6 h-6 animate-spin-random" alt="Loading..." /> : <Check className="w-5 h-5" />}
                                     </button>
                                 </div>
 
