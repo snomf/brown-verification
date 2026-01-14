@@ -13,6 +13,7 @@ export default function Verify() {
     const [username, setUsername] = useState('');
     const [fullEmail, setFullEmail] = useState('');
     const [isAlumni, setIsAlumni] = useState(false);
+    const [selectedDomain, setSelectedDomain] = useState('@brown.edu');
     const [classYear, setClassYear] = useState('');
     const [showClassOptions, setShowClassOptions] = useState(false);
     const [code, setCode] = useState('');
@@ -43,33 +44,13 @@ export default function Verify() {
         setError(null);
         setCustomBearMessage(null);
 
-        let emailToVerify = username.trim();
-        // Check if user already typed a full email (e.g. including @alumni.brown.edu)
-        const isFullAlumniEmail = emailToVerify.endsWith('@alumni.brown.edu');
-
-        let finalEmail;
-        if (isFullAlumniEmail) {
-            finalEmail = emailToVerify;
-            setIsAlumni(true);
-        } else if (emailToVerify.includes('@')) {
-            // User typed some other email or tried to type full brown.edu
-            // We force standard behavior unless it's explicitly alumni
-            finalEmail = emailToVerify;
-            // If they typed @brown.edu, correct.
-        } else {
-            // Standard username input
-            finalEmail = `${emailToVerify}@brown.edu`;
-        }
-
-        // Final sanity check for display
+        let finalEmail = `${username.trim()}${selectedDomain}`;
         setFullEmail(finalEmail);
 
-        // If they checked the box "I am an Alumni" BUT didn't type an alumni email, we should probably warn or handle?
-        // Actually, let's just rely on the email domain primarily. 
-        // If the user selects "Class Year" options, we ignore Alumni flag if set manually unless email matches.
-
-        if (finalEmail.endsWith('@alumni.brown.edu')) {
+        if (selectedDomain === '@alumni.brown.edu') {
             setIsAlumni(true);
+        } else {
+            setIsAlumni(false);
         }
 
         try {
@@ -194,20 +175,28 @@ export default function Verify() {
                                 </div>
 
                                 <div className="flex flex-col gap-3">
-                                    <div className="relative flex items-center">
-                                        <input
-                                            type="text"
-                                            placeholder="josiah_carberry"
-                                            value={username}
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            className="w-full bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl pl-4 pr-32 py-4 text-lg font-medium outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-300"
-                                            required
-                                            autoFocus
-                                        />
-                                        <span className="absolute right-4 text-gray-400 font-bold pointer-events-none">
-                                            @brown.edu
-                                        </span>
+                                    <div className="relative group">
+                                        <div className="flex bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl overflow-hidden focus-within:border-[#CE1126] focus-within:bg-white transition-all shadow-sm">
+                                            <input
+                                                type="text"
+                                                placeholder="josiah_carberry"
+                                                value={username}
+                                                onChange={(e) => setUsername(e.target.value.replace(/@/g, ''))}
+                                                className="flex-1 pl-4 py-4 text-lg font-medium outline-none bg-transparent placeholder:text-gray-300"
+                                                required
+                                                autoFocus
+                                            />
+                                            <select
+                                                value={selectedDomain}
+                                                onChange={(e) => setSelectedDomain(e.target.value)}
+                                                className="bg-[#591C0B]/5 border-l-2 border-[#591C0B]/10 px-4 py-4 text-sm font-bold text-[#591C0B] outline-none cursor-pointer hover:bg-[#591C0B]/10 transition-colors appearance-none pr-8"
+                                                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23591C0B\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
+                                            >
+                                                <option value="@brown.edu">@brown.edu</option>
+                                                <option value="@alumni.brown.edu">@alumni.brown.edu</option>
+                                            </select>
+                                        </div>
+                                        <p className="mt-1.5 text-xs text-[#8C6B5D] font-medium opacity-60">No need to type the @ domain!</p>
                                     </div>
                                     <button
                                         disabled={loading || !username.trim()}
@@ -217,7 +206,7 @@ export default function Verify() {
                                     </button>
 
                                     {/** Optional Advanced Settings for Current Students */}
-                                    {!username.includes('alumni.brown.edu') && (
+                                    {selectedDomain === '@brown.edu' && (
                                         <div className="pt-2">
                                             <button
                                                 type="button"
@@ -237,8 +226,8 @@ export default function Verify() {
                                                                 type="button"
                                                                 onClick={() => setClassYear(year === classYear ? '' : year)}
                                                                 className={`p-2 rounded-lg text-sm font-bold border-2 transition-all ${classYear === year
-                                                                        ? 'bg-[#591C0B] text-white border-[#591C0B]'
-                                                                        : 'bg-white text-gray-500 border-transparent hover:border-[#591C0B]/10'
+                                                                    ? 'bg-[#591C0B] text-white border-[#591C0B]'
+                                                                    : 'bg-white text-gray-500 border-transparent hover:border-[#591C0B]/10'
                                                                     }`}
                                                             >
                                                                 Class of '{year.slice(2)}
