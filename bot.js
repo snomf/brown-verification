@@ -279,12 +279,21 @@ client.on('interactionCreate', async interaction => {
             console.log(`[Bruno Log] Assigned roles [${rolesToAssign.join(', ')}] to ${discordUserId}`);
 
             // Persist Verification
+            // Determine Type for DB
+            let verificationType = 'accepted';
+            if (isAlumniCode) {
+                verificationType = 'alumni';
+            } else if (classYear && ROLES[classYear]) {
+                verificationType = classYear;
+            }
+
             console.log(`[Bruno Log] Attempting to save verification for ${discordUserId}...`);
             const { error: insertError } = await supabase.from('verifications').insert({
                 discord_id: discordUserId,
                 email_hash: pending.email_hash,
                 verification_method: 'command',
-                verified_at: new Date().toISOString()
+                verified_at: new Date().toISOString(),
+                type: verificationType
             });
 
             if (insertError) {
@@ -338,7 +347,8 @@ client.on('interactionCreate', async interaction => {
                 discord_id: targetUserId,
                 verification_method: 'admin',
                 verified_at: new Date().toISOString(),
-                email_hash: 'admin_bypass_' + targetUserId
+                email_hash: 'admin_bypass_' + targetUserId,
+                type: 'accepted' // Default for admin force verification
             }, { onConflict: 'discord_id' });
 
             if (dbError) {

@@ -107,12 +107,21 @@ export async function POST(req) {
         }
 
         // 3. Mark as Permanently Verified (Privacy safe)
+        // Determine Type
+        let verificationType = 'accepted';
+        if (isAlumni) {
+            verificationType = 'alumni';
+        } else if (classYear && ROLES[classYear]) {
+            verificationType = classYear;
+        }
+
         // Transfer the hash to the permanent table
         await supabase.from('verifications').insert({
             discord_id: userId,
             email_hash: pending.email_hash,
             verification_method: 'website',
-            verified_at: new Date().toISOString()
+            verified_at: new Date().toISOString(),
+            type: verificationType
         });
 
         // Cleanup: Clear pending code
