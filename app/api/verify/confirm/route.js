@@ -3,7 +3,8 @@ import { supabaseAdmin as supabase } from '@/lib/supabase';
 
 export async function POST(req) {
     try {
-        const { code, userId, classYear } = await req.json();
+        const { code, userId, classYear, isAlumni } = await req.json();
+        const botToken = process.env.DISCORD_BOT_TOKEN;
 
         // Constants
         const ROLES = {
@@ -72,7 +73,6 @@ export async function POST(req) {
         // Let's allow the frontend to pass `isAlumni: true` if the user entered an alumni email.
         // (Note: In a high security app we would store this state server side, but this is a low-risk discord bot)
 
-        const { isAlumni } = await req.json(); // Re-read body properties
 
         if (isAlumni) {
             rolesToAssign.push(ROLES.ALUMNI);

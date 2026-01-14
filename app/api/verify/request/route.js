@@ -14,9 +14,10 @@ export async function POST(req) {
         console.log('[Verify Log] Received data:', { email: 'HIDDEN', userId: userId ? 'Present' : 'MISSING' });
 
         // 1. Basic Validation
-        if (!email || !email.toLowerCase().endsWith('@brown.edu')) {
+        const isAllowedDomain = email.toLowerCase().endsWith('@brown.edu') || email.toLowerCase().endsWith('@alumni.brown.edu');
+        if (!email || !isAllowedDomain) {
             console.warn('[Verify Log] 400: Invalid email domain (PII hidden)');
-            return NextResponse.json({ message: 'Only @brown.edu emails are allowed. Are you lost, friend?' }, { status: 400 });
+            return NextResponse.json({ message: 'Only @brown.edu or @alumni.brown.edu emails are allowed. Are you lost, friend?' }, { status: 400 });
         }
 
         if (!userId) {

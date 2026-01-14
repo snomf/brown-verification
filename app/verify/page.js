@@ -64,7 +64,7 @@ export default function Verify() {
             if (!res.ok) throw new Error(data.message || 'Failed to send code');
 
             setStep('code');
-            setCustomBearMessage(getRandomMessage('codeSent', { email: emailToVerify }));
+            setCustomBearMessage(getRandomMessage('codeSent', { email: finalEmail }));
         } catch (err) {
             setError(err.message);
             setCustomBearMessage(getRandomMessage('error'));
