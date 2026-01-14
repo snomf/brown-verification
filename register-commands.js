@@ -26,6 +26,18 @@ const commands = [
                 max_length: 6,
                 min_length: 6,
             },
+            {
+                name: 'class_year',
+                description: 'Optional: Select your class year (Current Students)',
+                type: ApplicationCommandOptionType.String,
+                required: false,
+                choices: [
+                    { name: "Class of '26", value: "2026" },
+                    { name: "Class of '27", value: "2027" },
+                    { name: "Class of '28", value: "2028" },
+                    { name: "Class of '29", value: "2029" },
+                ]
+            },
         ],
     },
     {

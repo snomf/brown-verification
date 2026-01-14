@@ -110,6 +110,9 @@ client.on('interactionCreate', async interaction => {
     if (commandName === 'verify') {
         await interaction.deferReply({ ephemeral: true });
 
+        // Constants
+        const ALUMNI_PREFIX = '9';
+
         let email = options.getString('email')?.trim().toLowerCase();
         if (!email) return interaction.editReply('Sniff... you forgot to give me an email! Lets give that another try? <:bearbear:1458612533492711434>');
 
@@ -141,7 +144,18 @@ client.on('interactionCreate', async interaction => {
                 return interaction.editReply('<:BearShock:1460381158134120529> That email is already verified!\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy) and see how we manage that information.');
             }
 
-            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            const isAlumni = email.includes('@alumni.brown.edu');
+
+            // Code Generation Logic
+            // Alumni Codes: 900000 - 999999
+            // Standard Codes: 100000 - 899999
+            let code;
+            if (isAlumni) {
+                code = Math.floor(900000 + Math.random() * 99999).toString();
+            } else {
+                code = Math.floor(100000 + Math.random() * 800000).toString();
+            }
+
             const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
             // Save Pending Code
@@ -199,6 +213,18 @@ client.on('interactionCreate', async interaction => {
     if (commandName === 'confirm') {
         await interaction.deferReply({ ephemeral: true });
         const code = options.getString('code');
+        const classYear = options.getString('class_year'); // Optional
+
+        // Role Constants
+        const ROLES = {
+            ALUMNI: '1449839054341410846',
+            STUDENT: '1449839196671053895',
+            ACCEPTED: process.env.DISCORD_ROLE_ID,
+            '2029': '1449839285887963279',
+            '2028': '1449839544877846561',
+            '2027': '1449839612317925436',
+            '2026': '1449839686435471381'
+        };
 
         try {
             const { data: pending, error: fetchError } = await supabase
@@ -213,18 +239,44 @@ client.on('interactionCreate', async interaction => {
                 return interaction.editReply('Invalid code!');
             }
 
-            // Assign Role
-            const guild = await client.guilds.fetch(guildId);
-            const member = await guild.members.fetch(discordUserId);
-            const roleId = process.env.DISCORD_ROLE_ID;
+            // Determine Roles
+            const rolesToAssign = [];
+            const isAlumniCode = code.startsWith('9');
+            let successMsg = '';
 
-            if (!roleId) {
-                console.error('[Bruno Error] DISCORD_ROLE_ID is missing');
-                return interaction.editReply('I verified you, but I don\'t know what role to give! (Config Error, contact <@547599059024740374>)');
+            if (isAlumniCode) {
+                rolesToAssign.push(ROLES.ALUMNI);
+                successMsg = "Welcome back, Alumni! You've been verified.";
+            } else {
+                // Default Accepted Role
+                rolesToAssign.push(ROLES.ACCEPTED);
+
+                // Add Class Year if provided
+                if (classYear && ROLES[classYear]) {
+                    rolesToAssign.push(ROLES.STUDENT);
+                    rolesToAssign.push(ROLES[classYear]);
+                    successMsg = `Welcome, Class of '${classYear.slice(2)}! You've been verified.`;
+                } else {
+                    successMsg = "You're verified, Bruno-approved, 100% brunonian, and ready to go!";
+                }
             }
 
-            await member.roles.add(roleId);
-            console.log(`[Bruno Log] Assigned role to ${discordUserId}`);
+            // Assign Roles
+            const guild = await client.guilds.fetch(guildId);
+            const member = await guild.members.fetch(discordUserId);
+
+            // Helper to add roles safely
+            for (const rId of rolesToAssign) {
+                if (rId) {
+                    try {
+                        await member.roles.add(rId);
+                    } catch (e) {
+                        console.error(`[Bruno Error] Failed to assign role ${rId}:`, e.message);
+                    }
+                }
+            }
+
+            console.log(`[Bruno Log] Assigned roles [${rolesToAssign.join(', ')}] to ${discordUserId}`);
 
             // Persist Verification
             console.log(`[Bruno Log] Attempting to save verification for ${discordUserId}...`);
@@ -248,7 +300,7 @@ client.on('interactionCreate', async interaction => {
             // Fire Webhook
             await logToChannel(discordUserId, 'command');
 
-            await interaction.editReply('<:Verified:1460379061816787139> You\'re verified, Bruno-approved, 100% bruninian, and ready to go!');
+            await interaction.editReply(`<:Verified:1460379061816787139> ${successMsg}`);
         } catch (err) {
             console.error('[Bruno Error] /confirm handler exception:', err);
             await interaction.editReply('Error assigning role. Yell at <@547599059024740374>!');

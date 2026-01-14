@@ -12,6 +12,9 @@ export default function Verify() {
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState('');
     const [fullEmail, setFullEmail] = useState('');
+    const [isAlumni, setIsAlumni] = useState(false);
+    const [classYear, setClassYear] = useState('');
+    const [showClassOptions, setShowClassOptions] = useState(false);
     const [code, setCode] = useState('');
     const [step, setStep] = useState('email'); // 'email' | 'code' | 'success'
     const [loading, setLoading] = useState(false);
@@ -40,14 +43,40 @@ export default function Verify() {
         setError(null);
         setCustomBearMessage(null);
 
-        const emailToVerify = `${username.trim()}@brown.edu`;
-        setFullEmail(emailToVerify);
+        let emailToVerify = username.trim();
+        // Check if user already typed a full email (e.g. including @alumni.brown.edu)
+        const isFullAlumniEmail = emailToVerify.endsWith('@alumni.brown.edu');
+
+        let finalEmail;
+        if (isFullAlumniEmail) {
+            finalEmail = emailToVerify;
+            setIsAlumni(true);
+        } else if (emailToVerify.includes('@')) {
+            // User typed some other email or tried to type full brown.edu
+            // We force standard behavior unless it's explicitly alumni
+            finalEmail = emailToVerify;
+            // If they typed @brown.edu, correct.
+        } else {
+            // Standard username input
+            finalEmail = `${emailToVerify}@brown.edu`;
+        }
+
+        // Final sanity check for display
+        setFullEmail(finalEmail);
+
+        // If they checked the box "I am an Alumni" BUT didn't type an alumni email, we should probably warn or handle?
+        // Actually, let's just rely on the email domain primarily. 
+        // If the user selects "Class Year" options, we ignore Alumni flag if set manually unless email matches.
+
+        if (finalEmail.endsWith('@alumni.brown.edu')) {
+            setIsAlumni(true);
+        }
 
         try {
             const res = await fetch('/api/verify/request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: emailToVerify, userId: user.id }),
+                body: JSON.stringify({ email: finalEmail, userId: user.id }),
             });
 
             const data = await res.json();
@@ -73,7 +102,12 @@ export default function Verify() {
             const res = await fetch('/api/verify/confirm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, userId: user.id }),
+                body: JSON.stringify({
+                    code,
+                    userId: user.id,
+                    isAlumni: isAlumni,
+                    classYear: !isAlumni && showClassOptions ? classYear : null
+                }),
             });
 
             const data = await res.json();
@@ -165,7 +199,8 @@ export default function Verify() {
                                             type="text"
                                             placeholder="josiah_carberry"
                                             value={username}
-                                            onChange={(e) => setUsername(e.target.value.split('@')[0])}
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
                                             className="w-full bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl pl-4 pr-32 py-4 text-lg font-medium outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-300"
                                             required
                                             autoFocus
@@ -180,6 +215,40 @@ export default function Verify() {
                                     >
                                         {loading ? <img src="/verified-bear.png" className="w-6 h-6 animate-spin-random" alt="Loading..." /> : <><Send className="w-5 h-5" /> Send Verification Code</>}
                                     </button>
+
+                                    {/** Optional Advanced Settings for Current Students */}
+                                    {!username.includes('alumni.brown.edu') && (
+                                        <div className="pt-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowClassOptions(!showClassOptions)}
+                                                className="text-xs font-bold text-[#8C6B5D] hover:text-[#591C0B] flex items-center gap-1 mb-2 transition-colors"
+                                            >
+                                                {showClassOptions ? '[-]' : '[+]'} I want to add my Class Year (Optional)
+                                            </button>
+
+                                            {showClassOptions && (
+                                                <div className="bg-white/50 p-4 rounded-xl border-2 border-[#591C0B]/5 animate-in slide-in-from-top-2">
+                                                    <p className="text-xs text-[#8C6B5D] mb-2 font-bold">Select your Class Year:</p>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {['2029', '2028', '2027', '2026'].map((year) => (
+                                                            <button
+                                                                key={year}
+                                                                type="button"
+                                                                onClick={() => setClassYear(year === classYear ? '' : year)}
+                                                                className={`p-2 rounded-lg text-sm font-bold border-2 transition-all ${classYear === year
+                                                                        ? 'bg-[#591C0B] text-white border-[#591C0B]'
+                                                                        : 'bg-white text-gray-500 border-transparent hover:border-[#591C0B]/10'
+                                                                    }`}
+                                                            >
+                                                                Class of '{year.slice(2)}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 {error && <p className="text-red-500 font-bold text-sm bg-red-100 p-2 rounded-lg">{error}</p>}
                             </form>
