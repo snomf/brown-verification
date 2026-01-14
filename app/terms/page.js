@@ -67,7 +67,7 @@ export default function TermsPage() {
                 </div>
 
                 <footer className="mt-20 pt-10 border-t border-white/10 text-center text-gray-600 text-sm">
-                    <p>Last updated: January 2025</p>
+                    <p>Last updated: January 2026</p>
                 </footer>
             </div>
         </div>
