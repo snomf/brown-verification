@@ -335,12 +335,40 @@ client.on('interactionCreate', async interaction => {
             }
 
             const targetUser = options.getUser('user');
+            const verifyType = options.getString('type') || 'accepted';
+
             if (!targetUser) {
                 return interaction.editReply('Please specify a user to verify.');
             }
 
             const targetUserId = targetUser.id;
-            console.log(`[Bruno Log] Admin verify initiated for ${targetUserId} by ${interaction.user.tag}`);
+            console.log(`[Bruno Log] Admin verify initiated for ${targetUserId} by ${interaction.user.tag} with type ${verifyType}`);
+
+            const ROLES = {
+                ALUMNI: '1449839054341410846',
+                STUDENT: '1449839196671053895',
+                ACCEPTED: process.env.DISCORD_ROLE_ID,
+                '2029': '1449839285887963279',
+                '2028': '1449839544877846561',
+                '2027': '1449839612317925436',
+                '2026': '1449839686435471381'
+            };
+
+            const rolesToAssign = [];
+            let successDetail = '';
+
+            if (verifyType === 'alumni') {
+                rolesToAssign.push(ROLES.ALUMNI);
+                successDetail = 'as **Alumni**';
+            } else if (ROLES[verifyType]) {
+                rolesToAssign.push(ROLES.ACCEPTED);
+                rolesToAssign.push(ROLES.STUDENT);
+                rolesToAssign.push(ROLES[verifyType]);
+                successDetail = `as **Class of '${verifyType.slice(2)}**`;
+            } else {
+                rolesToAssign.push(ROLES.ACCEPTED);
+                successDetail = 'with **Accepted** role';
+            }
 
             // Force insert into Supabase
             const { error: dbError } = await supabase.from('verifications').upsert({
@@ -348,7 +376,7 @@ client.on('interactionCreate', async interaction => {
                 verification_method: 'admin',
                 verified_at: new Date().toISOString(),
                 email_hash: 'admin_bypass_' + targetUserId,
-                type: 'accepted' // Default for admin force verification
+                type: verifyType
             }, { onConflict: 'discord_id' });
 
             if (dbError) {
@@ -356,21 +384,25 @@ client.on('interactionCreate', async interaction => {
                 return interaction.editReply(`<:BearShock:1460381158134120529> Database error: ${dbError.message}`);
             }
 
-            // Assign Role
-            const roleId = process.env.DISCORD_ROLE_ID;
-            if (!roleId) {
-                return interaction.editReply('Config Error: DISCORD_ROLE_ID is missing.');
-            }
-
+            // Assign Roles
             const guild = await client.guilds.fetch(guildId);
             const memberToVerify = await guild.members.fetch(targetUserId);
 
-            await memberToVerify.roles.add(roleId);
-            console.log(`[Bruno Log] Admin manually assigned role to ${targetUserId}`);
+            for (const rId of rolesToAssign) {
+                if (rId) {
+                    try {
+                        await memberToVerify.roles.add(rId);
+                    } catch (e) {
+                        console.error(`[Bruno Error] Admin failed to assign role ${rId}:`, e.message);
+                    }
+                }
+            }
+
+            console.log(`[Bruno Log] Admin manually assigned roles [${rolesToAssign.join(', ')}] to ${targetUserId}`);
 
             await logToChannel(targetUserId, 'admin');
 
-            await interaction.editReply(`<:Verified:1460379061816787139> **Success!** User <@${targetUserId}> has been forcibly verified.`);
+            await interaction.editReply(`<:Verified:1460379061816787139> **Success!** User <@${targetUserId}> has been forcibly verified ${successDetail}.`);
         } catch (err) {
             console.error('[Bruno Error] Admin Verify Exception:', err);
             // Check if we can still reply
