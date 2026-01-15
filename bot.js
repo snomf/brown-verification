@@ -206,7 +206,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             console.log(`[Bruno Log] Email successfully queued/sent. Resend ID: ${resendResponse.data?.id}`);
-            await interaction.editReply('<:bearbear:1458612533492711434> I sent my pigeon friend to your **Brown email**! Please **check your inbox**. Then, use the `/confirm` command with the code I sent you.\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy)');
+            await interaction.editReply('<:bearbear:1458612533492711434> I sent my pigeon friend to your **Brown email**! Please **check your inbox**. Then, use the `/confirm` command with the code I sent you.\n\n**💡 Tip:** Use the `class_year` option in `/confirm` to get your graduation roles!\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy)');
         } catch (err) {
             console.error('[Bruno Error] /verify handler exception:', err);
             await interaction.editReply('Error! My pigeons are on strike and my email was not sent. Try again later.');
@@ -255,7 +255,10 @@ client.on('interactionCreate', async interaction => {
                 rolesToAssign.push(ROLES.ACCEPTED);
 
                 // Add Class Year if provided
-                if (classYear && ROLES[classYear]) {
+                if (classYear === '2030') {
+                    rolesToAssign.push(ROLES.STUDENT);
+                    successMsg = "Welcome, Class of '30! You've been verified.";
+                } else if (classYear && ROLES[classYear]) {
                     rolesToAssign.push(ROLES.STUDENT);
                     rolesToAssign.push(ROLES[classYear]);
                     successMsg = `Welcome, Class of '${classYear.slice(2)}! You've been verified.`;

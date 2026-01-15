@@ -53,6 +53,9 @@ export async function POST(req) {
 
         if (isAlumni) {
             rolesToAssign.push(ROLES.ALUMNI);
+        } else if (classYear === '2030') {
+            rolesToAssign.push(ROLES.ACCEPTED);
+            rolesToAssign.push(ROLES.STUDENT);
         } else if (classYear && ROLES[classYear]) {
             rolesToAssign.push(ROLES.ACCEPTED);
             rolesToAssign.push(ROLES.STUDENT);

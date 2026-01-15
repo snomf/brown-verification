@@ -32,6 +32,7 @@ const commands = [
                 type: ApplicationCommandOptionType.String,
                 required: false,
                 choices: [
+                    { name: "Class of '30 (Default)", value: "2030" },
                     { name: "Class of '26", value: "2026" },
                     { name: "Class of '27", value: "2027" },
                     { name: "Class of '28", value: "2028" },
@@ -58,6 +59,7 @@ const commands = [
                 choices: [
                     { name: 'Accepted (Default)', value: 'accepted' },
                     { name: 'Alumni', value: 'alumni' },
+                    { name: "Class of '30", value: "2030" },
                     { name: "Class of '26", value: "2026" },
                     { name: "Class of '27", value: "2027" },
                     { name: "Class of '28", value: "2028" },

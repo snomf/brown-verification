@@ -14,7 +14,7 @@ export default function Verify() {
     const [fullEmail, setFullEmail] = useState('');
     const [isAlumni, setIsAlumni] = useState(false);
     const [selectedDomain, setSelectedDomain] = useState('@brown.edu');
-    const [classYear, setClassYear] = useState('');
+    const [classYear, setClassYear] = useState('2030');
     const [showClassOptions, setShowClassOptions] = useState(false);
     const [code, setCode] = useState('');
     const [step, setStep] = useState('email'); // 'email' | 'code' | 'success'
@@ -220,7 +220,7 @@ export default function Verify() {
                                                 <div className="bg-white/50 p-4 rounded-xl border-2 border-[#591C0B]/5 animate-in slide-in-from-top-2">
                                                     <p className="text-xs text-[#8C6B5D] mb-2 font-bold">Select your Class Year:</p>
                                                     <div className="grid grid-cols-2 gap-2">
-                                                        {['2029', '2028', '2027', '2026'].map((year) => (
+                                                        {['2030', '2029', '2028', '2027', '2026'].map((year) => (
                                                             <button
                                                                 key={year}
                                                                 type="button"
@@ -230,7 +230,7 @@ export default function Verify() {
                                                                     : 'bg-white text-gray-500 border-transparent hover:border-[#591C0B]/10'
                                                                     }`}
                                                             >
-                                                                Class of '{year.slice(2)}
+                                                                {year === '2030' ? "Class of '30 (Default)" : `Class of '${year.slice(2)}`}
                                                             </button>
                                                         ))}
                                                     </div>
