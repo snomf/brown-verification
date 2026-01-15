@@ -57,8 +57,7 @@ export async function POST(req) {
         }
 
         if (existing) {
-            console.warn('[Verify Log] 400: Duplicate email hash detected');
-            return NextResponse.json({ message: 'That email is already verified! No double-dipping!' }, { status: 400 });
+            console.log('[Verify Log] User is already verified, allowing re-verification to update roles.');
         }
 
         // 3. Generate Code

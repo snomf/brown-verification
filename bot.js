@@ -120,8 +120,11 @@ client.on('interactionCreate', async interaction => {
             email = `${email}@brown.edu`;
         }
 
-        if (!email.endsWith('@brown.edu')) {
-            return interaction.editReply('<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** email! Are you really a brunonian? <:bearbear:1458612533492711434>');
+        const isAlumni = email.endsWith('@alumni.brown.edu');
+        const isStudent = email.endsWith('@brown.edu');
+
+        if (!isStudent && !isAlumni) {
+            return interaction.editReply('<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** or **@alumni.brown.edu** email! Are you really a brunonian? <:bearbear:1458612533492711434>');
         }
 
         try {
@@ -141,7 +144,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             if (existing) {
-                return interaction.editReply('<:BearShock:1460381158134120529> That email is already verified!\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy) and see how we manage that information.');
+                console.log(`[Bruno Log] User ${discordUserId} is already verified but is re-requesting a code to potentially update roles.`);
             }
 
             const isAlumni = email.includes('@alumni.brown.edu');
@@ -288,13 +291,13 @@ client.on('interactionCreate', async interaction => {
             }
 
             console.log(`[Bruno Log] Attempting to save verification for ${discordUserId}...`);
-            const { error: insertError } = await supabase.from('verifications').insert({
+            const { error: insertError } = await supabase.from('verifications').upsert({
                 discord_id: discordUserId,
                 email_hash: pending.email_hash,
                 verification_method: 'command',
                 verified_at: new Date().toISOString(),
                 type: verificationType
-            });
+            }, { onConflict: 'discord_id' });
 
             if (insertError) {
                 console.error('[Bruno Error] Failed to log verification to DB:', insertError);

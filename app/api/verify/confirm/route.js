@@ -54,6 +54,7 @@ export async function POST(req) {
         if (isAlumni) {
             rolesToAssign.push(ROLES.ALUMNI);
         } else if (classYear && ROLES[classYear]) {
+            rolesToAssign.push(ROLES.ACCEPTED);
             rolesToAssign.push(ROLES.STUDENT);
             rolesToAssign.push(ROLES[classYear]);
         } else {
@@ -91,13 +92,13 @@ export async function POST(req) {
         }
 
         // Transfer the hash to the permanent table (Use Snowflake discordUserId)
-        await supabase.from('verifications').insert({
+        await supabase.from('verifications').upsert({
             discord_id: discordUserId,
             email_hash: pending.email_hash,
             verification_method: 'website',
             verified_at: new Date().toISOString(),
             type: verificationType
-        });
+        }, { onConflict: 'discord_id' });
 
         // 6. Cleanup: Clear pending code
         await supabase.from('pending_codes').delete().eq('discord_id', discordUserId);
