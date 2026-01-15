@@ -8,7 +8,7 @@ const commands = [
         options: [
             {
                 name: 'email',
-                description: 'Your @brown.edu email address',
+                description: 'Your @brown.edu or @alumni.brown.edu email',
                 type: ApplicationCommandOptionType.String,
                 required: true,
             },
