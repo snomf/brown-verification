@@ -113,7 +113,7 @@ export default function PrivacyPage() {
                 </div>
 
                 <footer className="mt-20 pt-10 border-t border-white/10 text-center text-gray-500 text-sm flex flex-col items-center gap-4">
-                    <p>This page is open source.</p>
+                    <p>This entire program is open source, you can look at it for yourself below.</p>
                     <a
                         href="https://github.com/snomf/brown-verification"
                         target="_blank"

@@ -27,10 +27,10 @@ export default function TermsPage() {
                 <div className="space-y-12 text-gray-300 leading-relaxed text-lg">
                     <section>
                         <p className="text-xl font-medium text-white mb-4">
-                            By using Bruno Verifies, you agree to these <span className="text-red-400 underline decoration-wavy">simple rules.</span>
+                            By using Bruno Verifies, you agree to these <span className="text-red-400 underline decoration-wavy">simple rules (and the ones in the server, of course).</span>
                         </p>
                         <p>
-                            This service is designed to verify your status as a Brown University student on Discord. We want to keep this community safe and authentic.
+                            This service is designed to verify your status as a Brown University student on our Brownies & Applicants server. We want to keep this community safe and authentic.
                         </p>
                     </section>
 
@@ -40,10 +40,10 @@ export default function TermsPage() {
                             No Affiliation with Brown
                         </h2>
                         <p className="mb-6">
-                            Bruno Verifies is a student-run project and is <strong>not</strong> officially affiliated with, endorsed by, or connected to Brown University administration.
+                            Bruno Verifies is a student-run project and is <strong>not (though we wish)</strong> officially affiliated with, endorsed by, or connected to Brown University.
                         </p>
                         <p>
-                            We provide this service "as is" without any warranties. While we try our best to keep things running smoothly, things might break occasionally.
+                            We provide this service "as is" without any warranties. While we try our best to keep things running smoothly, things might break and that's FINE.
                         </p>
                     </section>
 
@@ -52,11 +52,11 @@ export default function TermsPage() {
                         <ul className="grid gap-4">
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-red-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-red-500 rounded-full"></div></div>
-                                <span><strong>Do not</strong> attempt to verify with an email address that does not belong to you.</span>
+                                <span><strong>Do not</strong> attempt to verify with an email address that does not belong to you. The role is for Brunonians only.</span>
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-red-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-red-500 rounded-full"></div></div>
-                                <span><strong>Do not</strong> spam the verification bot or API endpoints.</span>
+                                <span><strong>Do not</strong> spam the verification bot, its hard to run as is.</span>
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-red-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-red-500 rounded-full"></div></div>
