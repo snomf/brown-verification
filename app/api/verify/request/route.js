@@ -14,7 +14,8 @@ export async function POST(req) {
         console.log('[Verify Log] Received data:', { email: 'HIDDEN', userId: userId ? 'Present' : 'MISSING' });
 
         // 1. Basic Validation
-        const isAllowedDomain = email.toLowerCase().endsWith('@brown.edu') || email.toLowerCase().endsWith('@alumni.brown.edu');
+        const emailLower = email?.toLowerCase() || '';
+        const isAllowedDomain = emailLower.endsWith('@brown.edu') || emailLower.endsWith('@alumni.brown.edu');
         if (!email || !isAllowedDomain) {
             console.warn('[Verify Log] 400: Invalid email domain (PII hidden)');
             return NextResponse.json({ message: 'Only @brown.edu or @alumni.brown.edu emails are allowed. Are you lost, friend?' }, { status: 400 });
@@ -24,6 +25,22 @@ export async function POST(req) {
             console.error('[Verify Log] 400: Missing userId in request');
             return NextResponse.json({ message: 'I can\'t tell who you are! Profile missing.' }, { status: 400 });
         }
+
+        // 1.5 Get Discord ID from Supabase Auth
+        console.log('[Verify Log] Resolving Discord ID for Supabase User:', userId);
+        const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
+
+        if (userError || !user) {
+            console.error('[Verify Log] User not found or Auth error:', userError);
+            return NextResponse.json({ message: 'User profile not found. Are you logged in with Discord?' }, { status: 404 });
+        }
+
+        const discordUserId = user.user_metadata.provider_id;
+        if (!discordUserId) {
+            console.error('[Verify Log] provider_id missing in user metadata');
+            return NextResponse.json({ message: 'Your account is missing Discord info. Try logging out and back in!' }, { status: 400 });
+        }
+        console.log('[Verify Log] Resolved Discord Snowflake:', discordUserId);
 
         // 2. Check for Duplicate (Privacy Safe)
         const emailHash = hashEmail(email);
@@ -46,7 +63,15 @@ export async function POST(req) {
 
         // 3. Generate Code
         console.log('[Verify Log] Generating verification code...');
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const isAlumni = emailLower.endsWith('@alumni.brown.edu');
+        let code;
+        if (isAlumni) {
+            // Alumni Codes: 900000 - 999999
+            code = Math.floor(900000 + Math.random() * 99999).toString();
+        } else {
+            // Standard Codes: 100000 - 899999
+            code = Math.floor(100000 + Math.random() * 800000).toString();
+        }
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
         // 4. Save Pending Code
@@ -54,7 +79,7 @@ export async function POST(req) {
         const { error: dbError } = await supabase
             .from('pending_codes')
             .upsert({
-                discord_id: userId,
+                discord_id: discordUserId,
                 code,
                 email_hash: emailHash,
                 expires_at: expiresAt.toISOString()

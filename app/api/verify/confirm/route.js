@@ -5,6 +5,7 @@ export async function POST(req) {
     try {
         const { code, userId, classYear, isAlumni } = await req.json();
         const botToken = process.env.DISCORD_BOT_TOKEN;
+        const guildId = process.env.DISCORD_GUILD_ID;
 
         // Constants
         const ROLES = {
@@ -17,11 +18,24 @@ export async function POST(req) {
             '2026': '1449839686435471381'
         };
 
-        // 1. Validate Code
+        // 1. Resolve Discord ID (Snowflake)
+        const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
+        if (userError || !user) {
+            console.error('[Verify Log] User not found or Auth error:', userError);
+            return NextResponse.json({ message: 'User not found' }, { status: 404 });
+        }
+
+        const discordUserId = user.user_metadata.provider_id;
+        if (!discordUserId) {
+            console.error('[Verify Log] provider_id missing in user metadata');
+            return NextResponse.json({ message: 'Missing Discord data.' }, { status: 400 });
+        }
+
+        // 2. Validate Code using discordUserId (Snowflake)
         const { data: pending, error: fetchError } = await supabase
             .from('pending_codes')
             .select('*')
-            .eq('discord_id', userId)
+            .eq('discord_id', discordUserId)
             .eq('code', code)
             .single();
 
@@ -34,45 +48,8 @@ export async function POST(req) {
             return NextResponse.json({ message: 'Code has expired.' }, { status: 400 });
         }
 
-        // 2. Assign Discord Role
-        // Get the User record from Supabase Auth to find their Discord Provider ID
-        const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
-        if (userError || !user) {
-            throw new Error('User not found');
-        }
-
-        const discordUserId = user.user_metadata.provider_id;
-
-        const guildId = process.env.DISCORD_GUILD_ID;
-        // Determine Roles to Assign
+        // 3. Determine Roles to Assign
         const rolesToAssign = [];
-
-        // Check for Alumni
-        // Use the original email from pending record (though hashed is stored, we need to check the domain from the INPUT if available, or rely on logic from request phase)
-        // Wait, we don't have the original email here, only the hash.
-        // HOWEVER, we can infer it if we passed the email in the request? No, the user provides the code.
-        // We must rely on client-side or check if the pending record has metadata? 
-        // Actually, for simplicity/security, we should probably re-verify the domain logic or store the 'type' in pending_codes.
-        // BUT, since we don't want to change the pending_codes schema right now, let's assume we can trust the client passed a flag OR check the domain if we had it.
-        // Actually, we can check the 'email_hash'. But hashing prevents domain checking.
-
-        // BETTER APPROACH: The Client knows if it was an alumni email because the user Typed it.
-        // But the backend should verify. Since we don't store the raw email in pending, we can't verify 'alumni' status just from the code confirm step unless we passed that metadata.
-
-        // Let's check the client request. If the client claims 'classYear', we trust it (authenticated user).
-        // If the client claims 'alumni' (maybe we pass 'isAlumni'), we trust it?
-        // Ideally we'd store 'verification_type' in pending_codes.
-
-        // Let's implement a 'type' check if possible.
-        // For now, let's trust the input 'classYear' for student roles. 
-        // For Alumni, the USERNAME input on the UI ends with @alumni.brown.edu.
-        // We verified the email format in the REQUEST step.
-        // We need to pass the 'isAlumni' flag from the frontend confirm step?
-        // Or better: The request step should have flagged it?
-
-        // Let's allow the frontend to pass `isAlumni: true` if the user entered an alumni email.
-        // (Note: In a high security app we would store this state server side, but this is a low-risk discord bot)
-
 
         if (isAlumni) {
             rolesToAssign.push(ROLES.ALUMNI);
@@ -84,8 +61,7 @@ export async function POST(req) {
             rolesToAssign.push(ROLES.ACCEPTED);
         }
 
-        // Discord API Call: Add Roles
-        // We loops through rolesToAssign
+        // 4. Discord API Call: Add Roles
         const roleResults = await Promise.all(rolesToAssign.map(async (rId) => {
             if (!rId) return true;
             const response = await fetch(
@@ -102,11 +78,10 @@ export async function POST(req) {
         }));
 
         if (roleResults.some(r => !r)) {
-            console.error('Some roles failed to assign.');
-            // We continue anyway to mark as verified
+            console.error('[Verify Log] Some roles failed to assign.');
         }
 
-        // 3. Mark as Permanently Verified (Privacy safe)
+        // 5. Mark as Permanently Verified (Privacy safe)
         // Determine Type
         let verificationType = 'accepted';
         if (isAlumni) {
@@ -115,22 +90,26 @@ export async function POST(req) {
             verificationType = classYear;
         }
 
-        // Transfer the hash to the permanent table
+        // Transfer the hash to the permanent table (Use Snowflake discordUserId)
         await supabase.from('verifications').insert({
-            discord_id: userId,
+            discord_id: discordUserId,
             email_hash: pending.email_hash,
             verification_method: 'website',
             verified_at: new Date().toISOString(),
             type: verificationType
         });
 
-        // Cleanup: Clear pending code
-        await supabase.from('pending_codes').delete().eq('discord_id', userId);
+        // 6. Cleanup: Clear pending code
+        await supabase.from('pending_codes').delete().eq('discord_id', discordUserId);
 
-        // Log to a Discord Webhook
+        // 7. Log to a Discord Webhook
         if (process.env.DISCORD_LOG_WEBHOOK) {
-            const { logToChannel } = await import('@/lib/discord');
-            await logToChannel(discordUserId, 'website');
+            try {
+                const { logToChannel } = await import('@/lib/discord');
+                await logToChannel(discordUserId, 'website');
+            } catch (webhookErr) {
+                console.error('[Verify Log] Webhook failed:', webhookErr.message);
+            }
         }
 
         return NextResponse.json({ message: 'Success!' });
