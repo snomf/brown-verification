@@ -53,18 +53,6 @@ export default function PrivacyPage() {
                         </p>
                     </section>
 
-                    <section className="bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
-                        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                            <BarChart3 className="w-6 h-6 text-blue-500" />
-                            Better Metrics
-                        </h2>
-                        <p className="mb-4">
-                            We use <strong>Google Analytics</strong> to help us understand how people use Bruno. This helps us see if things are breaking or if we need to make the site faster. We also want to know if running the site is worth it depending on its use (would not want to have something no one uses).
-                        </p>
-                        <p className="text-sm text-gray-400">
-                            Google collects anonymized data like your browser type, which pages you visit, and how long you stay. They don't know your name or your actual identity on this site. You can read more in their <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Privacy Policy</a>.
-                        </p>
-                    </section>
 
                     <section className="bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
                         <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
@@ -122,6 +110,16 @@ export default function PrivacyPage() {
                                 <span>We <strong>DO NOT</strong> read your Discord DMs. You can see what we have access to when you log in.</span>
                             </li>
                         </ul>
+                    </section>
+
+                    <section className="pt-8 opacity-40 hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-2 mb-2">
+                            <BarChart3 className="w-4 h-4 text-blue-500" />
+                            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Metrics & Performance</h2>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                            We use <strong>Google Analytics</strong> to understand usage and improve site speed. Anonymized data (browser type, session duration) is shared with Google. Review their <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Privacy Policy</a>.
+                        </p>
                     </section>
                 </div>
 
