@@ -103,7 +103,7 @@ export default function PrivacyPage() {
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-green-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full"></div></div>
-                                <span>We <strong>NEVER</strong> sell or share your data with 3rd parties. (Except for the anonymized analytics mentioned above—we don't even know how to sell data anyway).</span>
+                                <span>We <strong>NEVER</strong> sell or share your data with 3rd parties. (Except for the anonymized analytics (just to track how many people use the site, and determine if we keep running it)... we don't even know how to sell data anyway).</span>
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-green-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full"></div></div>
@@ -112,7 +112,7 @@ export default function PrivacyPage() {
                         </ul>
                     </section>
 
-                    <section className="pt-8 opacity-40 hover:opacity-100 transition-opacity">
+                    <section className="pt-8 border-t border-white/5 mt-8">
                         <div className="flex items-center gap-2 mb-2">
                             <BarChart3 className="w-4 h-4 text-blue-500" />
                             <h2 className="text-sm font-bold text-white uppercase tracking-wider">Metrics & Performance</h2>
