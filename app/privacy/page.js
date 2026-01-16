@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, RefreshCw, ChevronRight, ArrowLeft, Github } from 'lucide-react';
+import { Lock, RefreshCw, ChevronRight, ArrowLeft, Github, BarChart3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function PrivacyPage() {
@@ -55,6 +55,19 @@ export default function PrivacyPage() {
 
                     <section className="bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
                         <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+                            <BarChart3 className="w-6 h-6 text-blue-500" />
+                            Better Metrics
+                        </h2>
+                        <p className="mb-4">
+                            We use <strong>Google Analytics</strong> to help us understand how people use Bruno. This helps us see if things are breaking or if we need to make the site faster. We also want to know if running the site is worth it depending on its use (would not want to have something no one uses).
+                        </p>
+                        <p className="text-sm text-gray-400">
+                            Google collects anonymized data like your browser type, which pages you visit, and how long you stay. They don't know your name or your actual identity on this site. You can read more in their <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Privacy Policy</a>.
+                        </p>
+                    </section>
+
+                    <section className="bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
+                        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
                             <RefreshCw className="w-6 h-6 text-amber-500" />
                             The Hashing Machine
                         </h2>
@@ -102,7 +115,7 @@ export default function PrivacyPage() {
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-green-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full"></div></div>
-                                <span>We <strong>NEVER</strong> sell or share your data with 3rd parties. (We don't even know how to)</span>
+                                <span>We <strong>NEVER</strong> sell or share your data with 3rd parties. (Except for the anonymized analytics mentioned above—we don't even know how to sell data anyway).</span>
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-green-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full"></div></div>
