@@ -96,6 +96,10 @@ export default function Home() {
         <BotStatus />
       </div>
 
+      <div className="fixed bottom-6 left-6 z-50">
+        <BotStatus />
+      </div>
+
       <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4 items-center">
         <ThemeToggle />
         <Link
@@ -161,6 +165,14 @@ export default function Home() {
                     {loggedInMsg}
                   </h2>
                   <div className="flex flex-col sm:flex-row gap-3">
+                    {user?.user_metadata?.provider_id === '547599059024740374' && (
+                      <Link
+                        href="/admin"
+                        className="flex-1 py-4 bg-stone-800 dark:bg-amber-600 text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black text-center text-lg"
+                      >
+                        Admin Dash
+                      </Link>
+                    )}
                     <a
                       href="/verify"
                       className="flex-1 py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black text-center text-lg"
