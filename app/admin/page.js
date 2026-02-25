@@ -15,6 +15,9 @@ export default function AdminDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [verifications, setVerifications] = useState([]);
+  const [filteredVerifications, setFilteredVerifications] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
   const [stats, setStats] = useState({ total: 0, student: 0, alumni: 0 });
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -53,6 +56,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (res.ok) {
         setVerifications(data.verifications);
+        setFilteredVerifications(data.verifications);
         setStats(data.stats);
       }
     } catch (err) {
@@ -61,6 +65,25 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let filtered = verifications.filter(v => {
+      const matchesSearch =
+        (v.discordUser?.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (v.discordUser?.displayName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        v.discord_id.includes(searchTerm);
+
+      let matchesType = filterType === 'all';
+      if (filterType === 'manual') matchesType = !v.verification_method;
+      else if (filterType === 'website') matchesType = v.verification_method === 'website';
+      else if (filterType === 'admin') matchesType = v.verification_method === 'admin';
+      else if (filterType === 'alumni') matchesType = v.type === 'alumni';
+      else if (filterType === 'student') matchesType = v.type && v.type !== 'alumni';
+
+      return matchesSearch && matchesType;
+    });
+    setFilteredVerifications(filtered);
+  }, [searchTerm, filterType, verifications]);
 
   const handleAction = async (discordId, action) => {
     setActionLoading(discordId);
@@ -104,7 +127,6 @@ export default function AdminDashboard() {
               </Link>
               <div className="flex flex-col">
                 <h1 className="text-4xl font-black text-[#591C0B] dark:text-amber-500 tracking-tight uppercase leading-tight">Admin Dashboard</h1>
-                <BotStatus />
               </div>
             </div>
             <p className="text-[#8C6B5D] dark:text-stone-400 font-medium pl-1">Manage Brunonian verifications and roles.</p>
@@ -127,6 +149,10 @@ export default function AdminDashboard() {
           </div>
         </header>
 
+        <div className="fixed bottom-6 left-6 z-50">
+          <BotStatus />
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
           {[
@@ -140,6 +166,32 @@ export default function AdminDashboard() {
               <div className={`h-2 w-12 ${stat.color} rounded-full mt-4`}></div>
             </div>
           ))}
+        </div>
+
+        {/* Filters and Search */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="flex-1 relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
+            <input
+              type="text"
+              placeholder="Search by name or Discord ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-stone-800 border-2 border-[#591C0B]/5 dark:border-white/5 rounded-2xl outline-none focus:border-amber-500 transition-all shadow-sm"
+            />
+          </div>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-6 py-4 bg-white dark:bg-stone-800 border-2 border-[#591C0B]/5 dark:border-white/5 rounded-2xl outline-none focus:border-amber-500 transition-all shadow-sm font-bold text-[#591C0B] dark:text-amber-200"
+          >
+            <option value="all">All Types</option>
+            <option value="student">Student</option>
+            <option value="alumni">Alumni</option>
+            <option value="website">Verified via Web</option>
+            <option value="admin">Verified via Admin</option>
+            <option value="manual">Unknown/Manual</option>
+          </select>
         </div>
 
         {/* Verifications Table */}
@@ -156,7 +208,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#591C0B]/5 dark:divide-white/5">
-                {verifications.length > 0 ? verifications.map((v) => (
+                {filteredVerifications.length > 0 ? filteredVerifications.map((v) => (
                   <tr key={v.discord_id} className="hover:bg-stone-50/50 dark:hover:bg-stone-700/30 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -194,12 +246,16 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          v.verification_method === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          v.verification_method === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                          v.verification_method === 'website' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                          'bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-400'
                         }`}>
-                          {v.verification_method === 'admin' ? 'Admin Verified' : 'Email Verified'}
+                          {v.verification_method === 'admin' ? 'Admin Verified' :
+                           v.verification_method === 'website' ? 'Email Verified' :
+                           'Manual/Discord'}
                         </span>
                         <span className="text-[10px] font-black uppercase text-[#8C6B5D] dark:text-stone-500 pl-1">
-                          {v.type || 'Accepted'}
+                          {v.type || 'Unknown'}
                         </span>
                       </div>
                     </td>

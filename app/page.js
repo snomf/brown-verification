@@ -93,6 +93,9 @@ export default function Home() {
       {/* Header */}
       <div className="absolute top-6 left-6 md:top-10 md:left-10 z-50 flex flex-col gap-2">
         <img src="/verified-bear.png" alt="Bruno Verifies" className="w-16 h-auto drop-shadow-sm hover:scale-110 transition-transform cursor-pointer" onClick={() => window.location.href = '/'} />
+      </div>
+
+      <div className="fixed bottom-6 left-6 z-50">
         <BotStatus />
       </div>
 

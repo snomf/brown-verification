@@ -154,6 +154,9 @@ export default function Verify() {
                     <ArrowLeft className="w-4 h-4" />
                     Back Home
                 </button>
+            </div>
+
+            <div className="fixed bottom-6 left-6 z-50">
                 <BotStatus />
             </div>
 
