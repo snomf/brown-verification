@@ -6,6 +6,9 @@ import { Instagram, Shield, FileText } from 'lucide-react';
 import BrunoBear from './components/BrunoBear';
 import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
+import ThemeToggle from './components/ThemeToggle';
+import FAQ from './components/FAQ';
+import BotStatus from './components/BotStatus';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -62,7 +65,7 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#4A3728] font-sans selection:bg-amber-200 flex flex-col">
+    <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1C1917] text-[#4A3728] dark:text-[#F5F5F4] font-sans selection:bg-amber-200 flex flex-col transition-colors duration-300">
       {/* Social Sidebar/Floating */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
         <a
@@ -88,11 +91,13 @@ export default function Home() {
       </div>
 
       {/* Header */}
-      <div className="absolute top-6 left-6 md:top-10 md:left-10 z-50">
+      <div className="absolute top-6 left-6 md:top-10 md:left-10 z-50 flex flex-col gap-2">
         <img src="/verified-bear.png" alt="Bruno Verifies" className="w-16 h-auto drop-shadow-sm hover:scale-110 transition-transform cursor-pointer" onClick={() => window.location.href = '/'} />
+        <BotStatus />
       </div>
 
       <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4 items-center">
+        <ThemeToggle />
         <Link
           href="/terms"
           className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4 flex items-center gap-1"
@@ -113,10 +118,10 @@ export default function Home() {
         <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="w-full max-w-2xl text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-black text-[#591C0B] mb-2 tracking-tight">
+          <h1 className="text-4xl md:text-6xl font-black text-[#591C0B] dark:text-amber-500 mb-2 tracking-tight">
             Bruno Verifies
           </h1>
-          <p className="text-lg text-[#8C6B5D] font-medium">
+          <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">
             The Bruno-certified way to get your accepted role.
           </p>
         </div>
@@ -126,7 +131,7 @@ export default function Home() {
             <div className="space-y-6 text-center md:text-left">
               {!user ? (
                 <>
-                  <h2 className="text-2xl font-black text-[#591C0B] min-h-[4rem] flex items-center justify-center md:justify-start leading-tight">
+                  <h2 className="text-2xl font-black text-[#591C0B] dark:text-amber-500 min-h-[4rem] flex items-center justify-center md:justify-start leading-tight">
                     {greetingMsg}
                   </h2>
                   <button
@@ -148,14 +153,22 @@ export default function Home() {
                       className="w-12 h-12 rounded-full border-2 border-amber-500 shadow-md"
                     />
                     <div className="text-left">
-                      <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Hello,</p>
-                      <p className="font-bold text-[#591C0B]">{user?.user_metadata?.full_name || user?.user_metadata?.name || 'Brunonian'}</p>
+                      <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Hello,</p>
+                      <p className="font-bold text-[#591C0B] dark:text-amber-200">{user?.user_metadata?.full_name || user?.user_metadata?.name || 'Brunonian'}</p>
                     </div>
                   </div>
-                  <h2 className="text-2xl font-black text-[#591C0B] min-h-[4rem] flex items-center justify-center md:justify-start leading-tight">
+                  <h2 className="text-2xl font-black text-[#591C0B] dark:text-amber-500 min-h-[4rem] flex items-center justify-center md:justify-start leading-tight">
                     {loggedInMsg}
                   </h2>
                   <div className="flex flex-col sm:flex-row gap-3">
+                    {user?.user_metadata?.provider_id === '547599059024740374' && (
+                      <Link
+                        href="/admin"
+                        className="flex-1 py-4 bg-stone-800 dark:bg-amber-600 text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black text-center text-lg"
+                      >
+                        Admin Dash
+                      </Link>
+                    )}
                     <a
                       href="/verify"
                       className="flex-1 py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black text-center text-lg"
@@ -164,7 +177,7 @@ export default function Home() {
                     </a>
                     <button
                       onClick={handleLogout}
-                      className="px-6 py-4 bg-white text-gray-500 font-bold rounded-xl border-2 border-[#591C0B]/10 hover:bg-gray-50 transition-colors shadow-sm"
+                      className="px-6 py-4 bg-white dark:bg-stone-800 text-gray-500 dark:text-stone-400 font-bold rounded-xl border-2 border-[#591C0B]/10 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-stone-700 transition-colors shadow-sm"
                     >
                       Log out
                     </button>
@@ -174,15 +187,17 @@ export default function Home() {
             </div>
           </BrunoBear>
         </div>
+
+        <FAQ />
       </main>
 
-      <footer className="w-full text-center p-8 text-[#8C6B5D]/40 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em]">
+      <footer className="w-full text-center p-8 text-[#8C6B5D]/40 dark:text-stone-500 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em]">
         NOT AFFILIATED WITH BROWN UNIVERSITY • PROTECTED BY BRUNO THE BEAR, OF COURSE • © 2026 BRUNO VERIFIES,{' '}
         <a
           href="https://juainny.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-[#591C0B] transition-colors underline decoration-dotted underline-offset-2"
+          className="hover:text-[#591C0B] dark:hover:text-amber-500 transition-colors underline decoration-dotted underline-offset-2"
         >
           JUAINNY.COM
         </a>
