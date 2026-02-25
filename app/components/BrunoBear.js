@@ -22,7 +22,7 @@ export default function BrunoBear({ state, customMessage, onMessageClick, childr
         <div className="relative flex flex-col items-start animate-in fade-in slide-in-from-bottom-8 duration-700 w-full max-w-2xl mx-auto md:mx-0">
             {/* Chat BubbleContainer */}
             <div
-                className="relative bg-white text-black p-6 md:p-10 rounded-[2.5rem] rounded-bl-none shadow-2xl mb-4 w-full transform transition-all border-2 border-[#591C0B]/5 z-20"
+                className="relative bg-white dark:bg-stone-800 text-black dark:text-stone-100 p-6 md:p-10 rounded-[2.5rem] rounded-bl-none shadow-2xl mb-4 w-full transform transition-all border-2 border-[#591C0B]/5 dark:border-white/10 z-20"
                 onClick={onMessageClick}
             >
                 {children ? (
@@ -34,7 +34,7 @@ export default function BrunoBear({ state, customMessage, onMessageClick, childr
                 )}
 
                 {/* Triangle Pointer - Aligned with the Bear below */}
-                <div className="absolute bottom-[-22px] left-12 md:left-20 w-0 h-0 border-l-[25px] border-l-transparent border-r-[25px] border-r-transparent border-t-[25px] border-t-white drop-shadow-md"></div>
+                <div className="absolute bottom-[-22px] left-12 md:left-20 w-0 h-0 border-l-[25px] border-l-transparent border-r-[25px] border-r-transparent border-t-[25px] border-t-white dark:border-t-stone-800 drop-shadow-md"></div>
             </div>
 
             {/* Bear Image Wrapper with Cropping */}
@@ -54,7 +54,7 @@ export default function BrunoBear({ state, customMessage, onMessageClick, childr
                 />
 
                 {/* Subtle vignette to hide the cut-off edges smoothly */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#FDFBF7]/20 to-transparent pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#FDFBF7]/20 dark:from-[#1C1917]/20 to-transparent pointer-events-none"></div>
             </div>
         </div>
     );
