@@ -7,6 +7,8 @@ import { ArrowLeft, Loader2, Send, Check, Instagram, Shield, FileText } from 'lu
 import BrunoBear from '../components/BrunoBear';
 import { getRandomMessage } from '@/lib/bruno';
 import Link from 'next/link';
+import ThemeToggle from '../components/ThemeToggle';
+import BotStatus from '../components/BotStatus';
 
 export default function Verify() {
     const [user, setUser] = useState(null);
@@ -20,11 +22,22 @@ export default function Verify() {
     const [step, setStep] = useState('email'); // 'email' | 'code' | 'success'
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [resendTimer, setResendTimer] = useState(0);
 
     // Explicit bear message override when needed
     const [customBearMessage, setCustomBearMessage] = useState(null);
 
     const router = useRouter();
+
+    useEffect(() => {
+        let interval;
+        if (resendTimer > 0) {
+            interval = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendTimer]);
 
     useEffect(() => {
         const checkUser = async () => {
@@ -64,6 +77,7 @@ export default function Verify() {
             if (!res.ok) throw new Error(data.message || 'Failed to send code');
 
             setStep('code');
+            setResendTimer(60);
             setCustomBearMessage(getRandomMessage('codeSent', { email: finalEmail }));
         } catch (err) {
             setError(err.message);
@@ -107,7 +121,7 @@ export default function Verify() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-[#FDFBF7] text-[#4A3728] font-sans flex flex-col items-center justify-center p-6 overflow-hidden relative">
+        <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1C1917] text-[#4A3728] dark:text-[#F5F5F4] font-sans flex flex-col items-center justify-center p-6 overflow-hidden relative transition-colors duration-300">
             {/* Social Sidebar/Floating */}
             <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
                 <a
@@ -135,14 +149,20 @@ export default function Verify() {
             <div className="absolute top-6 left-6 z-50">
                 <button
                     onClick={() => router.push('/')}
-                    className="flex items-center gap-2 text-[#8C6B5D] font-bold hover:text-[#591C0B] transition-colors bg-white px-4 py-2 rounded-full shadow-sm border border-[#591C0B]/10"
+                    className="flex items-center gap-2 text-[#8C6B5D] font-bold hover:text-[#591C0B] transition-colors bg-white dark:bg-stone-800 px-4 py-2 rounded-full shadow-sm border border-[#591C0B]/10 dark:border-white/10"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     Back Home
                 </button>
             </div>
 
-            <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4">
+            {/* Bot Status - LOWER LEFT ONLY */}
+            <div className="fixed bottom-8 left-8 z-50">
+                <BotStatus />
+            </div>
+
+            <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4 items-center">
+                <ThemeToggle />
                 <Link
                     href="/terms"
                     className="text-sm font-bold text-amber-900/60 hover:text-amber-900 underline decoration-dotted underline-offset-4 flex items-center gap-1"
@@ -168,28 +188,28 @@ export default function Verify() {
                         {step === 'email' && (
                             <form onSubmit={handleRequestCode} className="space-y-4">
                                 <div>
-                                    <h2 className="text-2xl font-black text-[#591C0B] mb-1">
+                                    <h2 className="text-2xl font-black text-[#591C0B] dark:text-amber-500 mb-1">
                                         {customBearMessage || "What's your Brown (email) username?"}
                                     </h2>
-                                    <p className="text-[#8C6B5D] text-sm mb-4">Just the part before the @brown.edu!</p>
+                                    <p className="text-[#8C6B5D] dark:text-stone-400 text-sm mb-4">Just the part before the @brown.edu!</p>
                                 </div>
 
                                 <div className="flex flex-col gap-3">
                                     <div className="relative group">
-                                        <div className="flex bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl overflow-hidden focus-within:border-[#CE1126] focus-within:bg-white transition-all shadow-sm">
+                                        <div className="flex bg-[#FDFBF7] dark:bg-stone-900 border-2 border-[#591C0B]/10 dark:border-white/10 rounded-xl overflow-hidden focus-within:border-[#CE1126] focus-within:bg-white dark:focus-within:bg-stone-800 transition-all shadow-sm">
                                             <input
                                                 type="text"
                                                 placeholder="josiah_carberry"
                                                 value={username}
                                                 onChange={(e) => setUsername(e.target.value.replace(/@/g, ''))}
-                                                className="flex-1 pl-4 py-4 text-lg font-medium outline-none bg-transparent placeholder:text-gray-300"
+                                                className="flex-1 pl-4 py-4 text-lg font-medium outline-none bg-transparent placeholder:text-gray-300 dark:placeholder:text-stone-600 dark:text-stone-100"
                                                 required
                                                 autoFocus
                                             />
                                             <select
                                                 value={selectedDomain}
                                                 onChange={(e) => setSelectedDomain(e.target.value)}
-                                                className="bg-[#591C0B]/5 border-l-2 border-[#591C0B]/10 px-4 py-4 text-sm font-bold text-[#591C0B] outline-none cursor-pointer hover:bg-[#591C0B]/10 transition-colors appearance-none pr-8"
+                                                className="bg-[#591C0B]/5 dark:bg-white/5 border-l-2 border-[#591C0B]/10 dark:border-white/10 px-4 py-4 text-sm font-bold text-[#591C0B] dark:text-amber-200 outline-none cursor-pointer hover:bg-[#591C0B]/10 dark:hover:bg-white/10 transition-colors appearance-none pr-8"
                                                 style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23591C0B\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
                                             >
                                                 <option value="@brown.edu">@brown.edu</option>
@@ -246,9 +266,9 @@ export default function Verify() {
                         {step === 'code' && (
                             <form onSubmit={handleVerifyCode} className="space-y-4">
                                 <div>
-                                    <h2 className="text-2xl font-black text-[#591C0B] mb-1">{customBearMessage || "Check your inbox!"}</h2>
-                                    <p className="text-[#8C6B5D] text-sm mb-4">
-                                        I sent a code to <span className="text-[#CE1126] font-bold">{fullEmail}</span>
+                                    <h2 className="text-2xl font-black text-[#591C0B] dark:text-amber-500 mb-1">{customBearMessage || "Check your inbox!"}</h2>
+                                    <p className="text-[#8C6B5D] dark:text-stone-400 text-sm mb-4">
+                                        I sent a code to <span className="text-[#CE1126] dark:text-red-400 font-bold">{fullEmail}</span>
                                     </p>
                                 </div>
 
@@ -259,7 +279,7 @@ export default function Verify() {
                                         maxLength={6}
                                         value={code}
                                         onChange={(e) => setCode(e.target.value)}
-                                        className="flex-1 tracking-[0.5em] text-center text-2xl font-black bg-[#FDFBF7] border-2 border-[#591C0B]/10 rounded-xl px-4 py-3 outline-none focus:border-[#CE1126] focus:bg-white transition-all placeholder:text-gray-200 font-mono"
+                                        className="flex-1 tracking-[0.5em] text-center text-2xl font-black bg-[#FDFBF7] dark:bg-stone-900 border-2 border-[#591C0B]/10 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#CE1126] focus:bg-white dark:focus:bg-stone-800 transition-all placeholder:text-gray-200 dark:placeholder:text-stone-700 dark:text-stone-100 font-mono"
                                         required
                                         autoFocus
                                     />
@@ -271,15 +291,25 @@ export default function Verify() {
                                     </button>
                                 </div>
 
-                                <div className="flex justify-between items-center text-sm">
-                                    <button
-                                        type="button"
-                                        onClick={() => { setStep('email'); }}
-                                        className="font-bold text-gray-400 hover:text-[#591C0B] underline"
-                                    >
-                                        Wrong email?
-                                    </button>
-                                    {error && <p className="text-red-500 font-bold">{error}</p>}
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setStep('email'); }}
+                                            className="font-bold text-gray-400 hover:text-[#591C0B] underline transition-colors"
+                                        >
+                                            Wrong email?
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={loading || resendTimer > 0}
+                                            onClick={handleRequestCode}
+                                            className="font-bold text-[#CE1126] dark:text-red-400 hover:underline disabled:opacity-50 disabled:no-underline transition-all"
+                                        >
+                                            {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend Code'}
+                                        </button>
+                                    </div>
+                                    {error && <p className="text-red-500 font-bold text-sm bg-red-100 p-2 rounded-lg">{error}</p>}
                                 </div>
                             </form>
                         )}
@@ -291,10 +321,10 @@ export default function Verify() {
                                         <Check className="w-8 h-8 text-green-600" />
                                     </div>
                                     <div>
-                                        <h2 className="text-3xl font-black text-[#591C0B] mb-1">
+                                        <h2 className="text-3xl font-black text-[#591C0B] dark:text-amber-500 mb-1">
                                             {customBearMessage || "You're In!"}
                                         </h2>
-                                        <p className="text-[#8C6B5D] font-medium leading-tight">
+                                        <p className="text-[#8C6B5D] dark:text-stone-400 font-medium leading-tight">
                                             Role assigned. You're now a verified Brunonian.
                                         </p>
                                     </div>
@@ -302,7 +332,7 @@ export default function Verify() {
 
                                 <button
                                     onClick={() => router.push('/')}
-                                    className="w-full py-3 bg-white border-2 border-[#591C0B]/10 text-[#591C0B] font-bold rounded-xl hover:bg-[#FDFBF7] transition-colors mt-4"
+                                    className="w-full py-3 bg-white dark:bg-stone-800 border-2 border-[#591C0B]/10 dark:border-white/10 text-[#591C0B] dark:text-amber-500 font-bold rounded-xl hover:bg-[#FDFBF7] dark:hover:bg-stone-700 transition-colors mt-4"
                                 >
                                     Return to Home
                                 </button>
