@@ -146,7 +146,7 @@ export default function Verify() {
                 </a>
             </div>
 
-            <div className="absolute top-6 left-6 z-50">
+            <div className="absolute top-6 left-6 z-50 flex flex-col gap-2">
                 <button
                     onClick={() => router.push('/')}
                     className="flex items-center gap-2 text-[#8C6B5D] font-bold hover:text-[#591C0B] transition-colors bg-white dark:bg-stone-800 px-4 py-2 rounded-full shadow-sm border border-[#591C0B]/10 dark:border-white/10"
@@ -154,10 +154,6 @@ export default function Verify() {
                     <ArrowLeft className="w-4 h-4" />
                     Back Home
                 </button>
-            </div>
-
-            {/* Bot Status - LOWER LEFT ONLY */}
-            <div className="fixed bottom-8 left-8 z-50">
                 <BotStatus />
             </div>
 
