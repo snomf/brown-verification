@@ -100,6 +100,11 @@ export default function Home() {
         <BotStatus />
       </div>
 
+      {/* Bot Status - LOWER LEFT ONLY */}
+      <div className="fixed bottom-8 left-8 z-50">
+        <BotStatus />
+      </div>
+
       <div className="absolute top-6 right-6 md:top-10 md:right-10 z-50 flex gap-4 items-center">
         <ThemeToggle />
         <Link
