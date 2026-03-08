@@ -55,7 +55,7 @@ client.once('ready', () => {
     console.log('Bruno is ONLINE. Sniffing for logs...');
 
     client.user.setPresence({
-        activities: [{ name: 'Brown Students that want to verify', type: 2 }],
+        activities: [{ name: 'Custom Status', state: 'Verifying Brown students! 🐻', type: 4 }],
         status: 'online',
     });
 });
