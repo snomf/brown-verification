@@ -93,7 +93,7 @@ export default function DiscordLandingPage() {
               Join Discord Server
             </a>
             <Link
-              href="/verify"
+              href="/"
               className="w-full sm:w-auto px-10 py-5 bg-white dark:bg-stone-800 text-[#591C0B] dark:text-stone-200 text-xl font-bold rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all border-2 border-[#591C0B]/20 dark:border-stone-600 flex items-center justify-center gap-3"
             >
               Verify Account
