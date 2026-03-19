@@ -3,11 +3,11 @@ import { Shield, Users, MessageSquare, Calendar, CheckCircle2, ChevronDown, Inst
 import ThemeToggle from '../components/ThemeToggle';
 
 export const metadata = {
-  title: "Brown University Discord | Class of 2030 | Verified Students",
-  description: "Join the official verified Brown University Discord server for the Class of 2030. Connect with classmates, access organized channels, voice chat, and exclusive events.",
+  title: "Brown University Discord | Class of 2030 | Verified Students (& Other Applicants)",
+  description: "Join the official unofficial verified Brown University Discord server for the Class of 2030. Connect with classmates, access organized channels, voice chat, and more.",
   openGraph: {
-    title: "Brown University Discord | Class of 2030 | Verified Students",
-    description: "Connect with the Brown University Class of 2030 in the official verified Discord server. Enjoy organized channels, voice chat, and exclusive events.",
+    title: "Brown University Discord | Class of 2030 | Verified Students (& Other Applicants)",
+    description: "Connect with the Brown University Class of 2030 in the official unofficial Discord server. Enjoy organized channels, voice chat, and more.",
     url: 'https://brown.juainny.com/discord',
     siteName: 'Brown University Class of 2030 Discord',
     images: [
@@ -24,7 +24,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Brown University Discord | Class of 2030 | Verified Students",
-    description: "Join the official verified Brown University Discord server for the Class of 2030. Connect with classmates, access organized channels, voice chat.",
+    description: "Join the official unofficial verified Brown University Discord server for the Class of 2030. Connect with classmates, access organized channels, voice chat.",
     images: ['/verified-bear.png'],
   },
 };
@@ -49,7 +49,7 @@ export default function DiscordLandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaMarkup) }}
       />
-      
+
       {/* Header */}
       <div className="absolute top-6 left-6 md:top-10 md:left-10 z-50 flex flex-col gap-2">
         <Link href="/">
@@ -71,11 +71,11 @@ export default function DiscordLandingPage() {
             <Shield className="w-4 h-4" />
             <span>Official Class of 2030 Network</span>
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl font-black text-[#591C0B] dark:text-amber-500 mb-6 tracking-tight leading-tight">
-            Welcome Brown <br className="hidden md:block"/> Class of 2030 🐻
+            Welcome Brown <br className="hidden md:block" /> Class of 2030 🐻
           </h1>
-          
+
           <p className="text-xl md:text-2xl text-[#8C6B5D] dark:text-stone-300 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
             Join the largest verified community for incoming students. Meet your future classmates, find roommates, and stay updated.
           </p>
@@ -99,7 +99,7 @@ export default function DiscordLandingPage() {
               Verify Account
             </Link>
           </div>
-          <p className="mt-4 text-sm text-[#8C6B5D]/80 dark:text-stone-400 font-semibold uppercase tracking-widest">Thousands of students already joined</p>
+          <p className="mt-4 text-sm text-[#8C6B5D]/80 dark:text-stone-400 font-semibold uppercase tracking-widest">Dozens of students already joined! You're next, pls?</p>
         </section>
 
         {/* Why Discord > Insta */}
@@ -108,7 +108,7 @@ export default function DiscordLandingPage() {
             <h2 className="text-3xl md:text-5xl font-black text-[#591C0B] dark:text-amber-500 mb-4">
               Discord vs. Instagram
             </h2>
-            <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">Why we moved away from chaotic DM groups.</p>
+            <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">Why we moved away from instagram DM groups.</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
@@ -119,24 +119,24 @@ export default function DiscordLandingPage() {
               </div>
               <h3 className="text-2xl font-black text-rose-500 mb-6 flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-rose-500 block"></span>
-                Instagram GC
+                Instagram Groupchats
               </h3>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <span className="text-rose-500 font-bold mt-1">✕</span>
-                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">250 member limit forces scattered groups</span>
+                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">250 member limit forces multiple groups</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-rose-500 font-bold mt-1">✕</span>
-                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">Chaotic single stream of messages</span>
+                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">Chaotic single stream of messages, can never catch up I swear</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-rose-500 font-bold mt-1">✕</span>
-                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">Random internet strangers can join</span>
+                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">Random internet strangers can join, Brown's ED groupchat has Stanford students (where everyone else is)</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-rose-500 font-bold mt-1">✕</span>
-                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">No voice or screen-sharing casually</span>
+                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">No voice or screen-sharing casually, or you could get annoying calls</span>
                 </li>
               </ul>
             </div>
@@ -145,7 +145,7 @@ export default function DiscordLandingPage() {
             <div className="bg-white dark:bg-stone-800 p-8 rounded-3xl border-2 border-[#5865F2] shadow-[8px_8px_0px_0px_#5865F2] relative overflow-hidden group">
               <h3 className="text-2xl font-black text-[#5865F2] mb-6 flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#5865F2] block"></span>
-                The Official Discord
+                The Official Unofficial Discord
               </h3>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
@@ -154,15 +154,15 @@ export default function DiscordLandingPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#5865F2] shrink-0 mt-0.5" />
-                  <span className="text-[#4A3728] dark:text-stone-200 font-bold">Organized channels by topic & major</span>
+                  <span className="text-[#4A3728] dark:text-stone-200 font-bold">Organized channels by topic and importance (you can suggest more too!)</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#5865F2] shrink-0 mt-0.5" />
-                  <span className="text-[#4A3728] dark:text-stone-200 font-bold">Bot-verified authentic students only</span>
+                  <span className="text-[#4A3728] dark:text-stone-200 font-bold">Bot-verified authentic students only for student-only channels</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#5865F2] shrink-0 mt-0.5" />
-                  <span className="text-[#4A3728] dark:text-stone-200 font-bold">Drop-in voice channels & study rooms</span>
+                  <span className="text-[#4A3728] dark:text-stone-200 font-bold">Drop-in voice channel</span>
                 </li>
               </ul>
             </div>
@@ -175,32 +175,32 @@ export default function DiscordLandingPage() {
             <h2 className="text-3xl md:text-5xl font-black text-[#591C0B] dark:text-amber-500 mb-4">
               Server Features
             </h2>
-            <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">Everything you need to successfully navigate your first year at Brown.</p>
+            <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">People that are at the same step you are, where you're going.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 hover:-translate-y-1 transition-transform">
               <Shield className="w-10 h-10 text-amber-500 mb-4" />
               <h3 className="text-xl font-bold text-[#591C0B] dark:text-amber-400 mb-2">Verified Only</h3>
-              <p className="text-[#8C6B5D] dark:text-stone-400 font-medium">Our custom bot verifies every member against Brown's systems. No trolls, no randoms.</p>
+              <p className="text-[#8C6B5D] dark:text-stone-400 font-medium">Our custom bot verifies every member against Brown's systems. No trolls, no randoms. Mods are always there to fix errors and ensure that Brunonians are real.</p>
             </div>
-            
+
             <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 hover:-translate-y-1 transition-transform">
               <MessageSquare className="w-10 h-10 text-emerald-500 mb-4" />
               <h3 className="text-xl font-bold text-[#591C0B] dark:text-amber-400 mb-2">Organized Channels</h3>
-              <p className="text-[#8C6B5D] dark:text-stone-400 font-medium">Dedicated chats for dorms, concentrations, hobbies, and meme sharing.</p>
+              <p className="text-[#8C6B5D] dark:text-stone-400 font-medium">Dedicated chats for organized chatting (trust me you need it, you know if you've been in the IG groupchats.).</p>
             </div>
 
             <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 hover:-translate-y-1 transition-transform">
               <Users className="w-10 h-10 text-blue-500 mb-4" />
               <h3 className="text-xl font-bold text-[#591C0B] dark:text-amber-400 mb-2">Role Customization</h3>
-              <p className="text-[#8C6B5D] dark:text-stone-400 font-medium">Grab roles for your intended major, pronouns, graduation year, and interests.</p>
+              <p className="text-[#8C6B5D] dark:text-stone-400 font-medium">Grab roles for your application process, location and more. More personal roles coming after Ivy Day.</p>
             </div>
-            
+
             <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 md:col-span-3 lg:col-span-1 hover:-translate-y-1 transition-transform">
               <Calendar className="w-10 h-10 text-purple-500 mb-4" />
               <h3 className="text-xl font-bold text-[#591C0B] dark:text-amber-400 mb-2">Events & Voice Chats</h3>
-              <p className="text-[#8C6B5D] dark:text-stone-400 font-medium">Game nights, Q&A sessions with upperclassmen, and drop-in voice rooms.</p>
+              <p className="text-[#8C6B5D] dark:text-stone-400 font-medium">Soon, and certainly before your Freshman Fall, we'll have fun events in server.</p>
             </div>
           </div>
         </section>
@@ -230,7 +230,7 @@ export default function DiscordLandingPage() {
                 <ChevronDown className="w-5 h-5 text-amber-500 group-open:-rotate-180 transition-transform duration-300" />
               </summary>
               <div className="px-6 pb-6 text-[#8C6B5D] dark:text-stone-400 font-medium mt-[-10px]">
-                We use Bruno Verifies to keep the server safe! Simply head over to our <Link href="/verify" className="text-amber-600 dark:text-amber-400 underline font-bold">verification portal</Link>, log in with Discord, and complete the steps to get your Accepted role automatically.
+                We use Bruno Verifies to keep the server safe! Simply head over to our <Link href="/" className="text-amber-600 dark:text-amber-400 underline font-bold">verification portal</Link>, log in with Discord, and complete the steps to get your Accepted role automatically.
               </div>
             </details>
 
@@ -250,15 +250,15 @@ export default function DiscordLandingPage() {
                 <ChevronDown className="w-5 h-5 text-amber-500 group-open:-rotate-180 transition-transform duration-300" />
               </summary>
               <div className="px-6 pb-6 text-[#8C6B5D] dark:text-stone-400 font-medium mt-[-10px]">
-                Verification prevents spam bots, trolls, and non-students from accessing our community spaces. It ensures everyone in the main channels is actually part of the Class of 2030 or a verified upperclassman.
+                Verification prevents spam bots, trolls, and non-students from accessing our unique community spaces. It ensures everyone in the specific channels is actually part of the Class of 2030 or a verified upperclassman.
               </div>
             </details>
           </div>
         </section>
       </main>
-      
+
       <footer className="w-full text-center p-8 text-[#8C6B5D]/40 dark:text-stone-500 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] mt-auto">
-        NOT AFFILIATED WITH BROWN UNIVERSITY • BROWNU DISCORD • © 2026 BRUNO VERIFIES
+        NOT AFFILIATED WITH BROWN UNIVERSITY • PROTECTED BY BRUNO THE BEAR, OF COURSE • © 2026 BRUNO VERIFIES
       </footer>
     </div>
   );
