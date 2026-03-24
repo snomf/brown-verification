@@ -130,40 +130,59 @@ client.on('interactionCreate', async interaction => {
         const guild = await client.guilds.fetch(interaction.guildId);
         const targetMember = await guild.members.fetch(targetId).catch(() => null);
 
+        let statusText = '';
+        let color = 0x591C0B;
+
         if (action === 'approve') {
             if (targetMember) {
                 await targetMember.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
-                await targetMember.send("Your Ivy Day provisional verification was approved! You have temporary access for 28 days. Once you get your Brown email, don't forget to fully verify on the website!").catch(() => { });
+                await targetMember.send("✨ Your Ivy Day provisional verification was **approved**! 🐻 You have temporary access for 28 days. Once you get your Brown email, don't forget to fully verify on the website!").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'mod_approved' }).eq('discord_id', targetId);
-
-            const embed = EmbedBuilder.from(interaction.message.embeds[0])
-                .setColor(0x00FF00)
-                .setTitle(`New Ivy Verify Submission - APPROVED by ${interaction.user.tag}`);
-            await interaction.message.edit({ embeds: [embed], components: [] });
+            statusText = `✅ APPROVED by ${interaction.user.tag}`;
+            color = 0x00FF00;
 
         } else if (action === 'deny') {
             if (targetMember) {
-                await targetMember.send("Unfortunately, your provisional verification was denied. Please make sure your screenshot clearly shows your acceptance to Brown University and try again, or wait to verify using your brown.edu email.").catch(() => { });
+                await targetMember.send("❌ Unfortunately, your provisional verification was **denied**. Please make sure your screenshot clearly shows your acceptance to Brown University and try again, or wait to verify using your brown.edu email.").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'denied' }).eq('discord_id', targetId);
-
-            const embed = EmbedBuilder.from(interaction.message.embeds[0])
-                .setColor(0xFF0000)
-                .setTitle(`New Ivy Verify Submission - DENIED by ${interaction.user.tag}`);
-            await interaction.message.edit({ embeds: [embed], components: [] });
+            statusText = `❌ DENIED by ${interaction.user.tag}`;
+            color = 0xFF0000;
 
         } else if (action === 'manual') {
             if (targetMember) {
-                await targetMember.send("Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help!").catch(() => { });
+                await targetMember.send("✉️ Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help!").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'needs_manual_dm' }).eq('discord_id', targetId);
-
-            const embed = EmbedBuilder.from(interaction.message.embeds[0])
-                .setColor(0xFFFF00)
-                .setTitle(`New Ivy Verify Submission - NEEDS MANUAL DM (Claimed by ${interaction.user.tag})`);
-            await interaction.message.edit({ embeds: [embed], components: [] });
+            statusText = `⚠️ NEEDS MANUAL DM (Claimed by ${interaction.user.tag})`;
+            color = 0xFFFF00;
         }
+
+        // Update the embed and grey out ONLY the pressed button
+        const embed = EmbedBuilder.from(interaction.message.embeds[0])
+            .setColor(color)
+            .setTitle(`Ivy Verify Submission - ${statusText}`);
+
+        const newRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`verify_approve_${targetId}`)
+                .setLabel('Approve')
+                .setStyle(ButtonStyle.Success)
+                .setDisabled(action === 'approve'),
+            new ButtonBuilder()
+                .setCustomId(`verify_deny_${targetId}`)
+                .setLabel('Deny')
+                .setStyle(ButtonStyle.Danger)
+                .setDisabled(action === 'deny'),
+            new ButtonBuilder()
+                .setCustomId(`verify_manual_${targetId}`)
+                .setLabel('Needs Manual DM')
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(action === 'manual')
+        );
+
+        await interaction.message.edit({ embeds: [embed], components: [newRow] });
         return;
     }
 
@@ -585,21 +604,21 @@ client.on('interactionCreate', async interaction => {
 
             const embed = new EmbedBuilder()
                 .setTitle(`${testPrefix}New Ivy Verify Submission - AUTO APPROVED`)
-                .setDescription(`User: <@${discordUserId}>\nScore: ${score}/100\nExpires: ${new Date(expiresAt).toLocaleDateString()}\nNote: ${note || 'None'}`)
+                .setDescription(`User: <@${discordUserId}>\nScore: **${score}/100**\nExpires: ${new Date(expiresAt).toLocaleDateString()}\nNote: ${note || 'None'}`)
                 .setColor(0x00FF00)
-                .setImage(attachment.url);
+                .setThumbnail(attachment.url);
 
             const modChannel = await client.channels.fetch(process.env.MOD_REVIEW_CHANNEL_ID).catch(() => null);
             if (modChannel) await modChannel.send({ embeds: [embed] });
 
-            return interaction.editReply(`${testPrefix}<:Verified:1460379061816787139> I smelled the Brown acceptance! You've been given a temporary pass. You will need to fully verify via the website when you receive your @brown.edu email.`);
+            return interaction.editReply(`${testPrefix}<:Verified:1460379061816787139> ROARRRRRR, I smell a Brunonian from a mile away! <:brunobear:1460379061816787139> You've been given a temporary pass until **${new Date(expiresAt).toLocaleDateString()}**. 🐻 You will need to fully verify via the website when you receive your @brown.edu email!`);
         } else {
             // Mod Review
             const embed = new EmbedBuilder()
                 .setTitle(`${testPrefix}New Ivy Verify Submission - NEEDS REVIEW`)
-                .setDescription(`User: <@${discordUserId}> (${discordUserId})\nScore: ${score}/100\nNote: ${note || 'None'}\nOCR Preview: ${ocrText.substring(0, 200)}...`)
+                .setDescription(`User: <@${discordUserId}> (${discordUserId})\nScore: **${score}/100**\nNote: ${note || 'None'}\n\n**OCR Preview:**\n*${ocrText.substring(0, 200)}...*`)
                 .setColor(0xFFA500)
-                .setImage(attachment.url);
+                .setThumbnail(attachment.url);
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId(`verify_approve_${discordUserId}`).setLabel('Approve').setStyle(ButtonStyle.Success),
@@ -622,7 +641,7 @@ client.on('interactionCreate', async interaction => {
                 expires_at: expiresAt
             }, { onConflict: 'discord_id' });
 
-            return interaction.editReply(`${testPrefix}My nose is a bit stuffed today, I couldn't automatically verify your letter (Score: ${score}). I've sent it to my human friends (moderators) to check. You'll get a DM shortly!`);
+            return interaction.editReply(`${testPrefix}ROARRRRRR, I couldn't automatically verify your letter, something about it makes me give it a score of **${score}**. 🧐 I've sent it to real brunonians to check. You'll get a DM shoRRRRRRRtly! 🐻‍❄️`);
         }
     }
 });
