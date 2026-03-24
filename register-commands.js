@@ -106,10 +106,19 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN)
     try {
         console.log('Started refreshing application (/) commands.');
 
-        await rest.put(
-            Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
-            { body: commands },
-        );
+        if (process.env.DISCORD_GUILD_ID) {
+            console.log(`Registering commands to Guild: ${process.env.DISCORD_GUILD_ID}`);
+            await rest.put(
+                Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.DISCORD_GUILD_ID),
+                { body: commands },
+            );
+        } else {
+            console.log('Registering global commands...');
+            await rest.put(
+                Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
+                { body: commands },
+            );
+        }
 
         console.log('Successfully reloaded application (/) commands.');
     } catch (error) {

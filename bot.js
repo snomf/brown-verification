@@ -110,7 +110,7 @@ client.on('interactionCreate', async interaction => {
         const isAdmin = memberRoles.some(role => allowedRoles.includes(role));
 
         if (!isAdmin) {
-             return interaction.reply({ content: 'You are not authorized to use these buttons.', ephemeral: true });
+            return interaction.reply({ content: 'You are not authorized to use these buttons.', ephemeral: true });
         }
 
         const customId = interaction.customId;
@@ -133,10 +133,10 @@ client.on('interactionCreate', async interaction => {
         if (action === 'approve') {
             if (targetMember) {
                 await targetMember.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
-                await targetMember.send("Your Ivy Day provisional verification was approved! You have temporary access for 28 days. Once you get your Brown email, don't forget to fully verify on the website!").catch(() => {});
+                await targetMember.send("Your Ivy Day provisional verification was approved! You have temporary access for 28 days. Once you get your Brown email, don't forget to fully verify on the website!").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'mod_approved' }).eq('discord_id', targetId);
-            
+
             const embed = EmbedBuilder.from(interaction.message.embeds[0])
                 .setColor(0x00FF00)
                 .setTitle(`New Ivy Verify Submission - APPROVED by ${interaction.user.tag}`);
@@ -144,10 +144,10 @@ client.on('interactionCreate', async interaction => {
 
         } else if (action === 'deny') {
             if (targetMember) {
-                await targetMember.send("Unfortunately, your provisional verification was denied. Please make sure your screenshot clearly shows your acceptance to Brown University and try again, or wait to verify using your brown.edu email.").catch(() => {});
+                await targetMember.send("Unfortunately, your provisional verification was denied. Please make sure your screenshot clearly shows your acceptance to Brown University and try again, or wait to verify using your brown.edu email.").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'denied' }).eq('discord_id', targetId);
-            
+
             const embed = EmbedBuilder.from(interaction.message.embeds[0])
                 .setColor(0xFF0000)
                 .setTitle(`New Ivy Verify Submission - DENIED by ${interaction.user.tag}`);
@@ -155,7 +155,7 @@ client.on('interactionCreate', async interaction => {
 
         } else if (action === 'manual') {
             if (targetMember) {
-                await targetMember.send("Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help!").catch(() => {});
+                await targetMember.send("Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help!").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'needs_manual_dm' }).eq('discord_id', targetId);
 
@@ -499,7 +499,7 @@ client.on('interactionCreate', async interaction => {
         const isAdmin = memberRoles.some(role => allowedRoles.includes(role));
 
         if (forceTest && !isAdmin) {
-             return interaction.editReply('Only admins can use force_test.');
+            return interaction.editReply('Only admins can use force_test.');
         }
 
         // Check if fully verified in DB
@@ -638,21 +638,21 @@ setInterval(async () => {
         if (expired && expired.length > 0) {
             for (const record of expired) {
                 const targetId = record.discord_id;
-                
+
                 // Check if they fully verified in the meantime
                 const { data: isVerified } = await supabase.from('verifications').select('id').eq('discord_id', targetId).maybeSingle();
-                
+
                 if (!isVerified) {
                     const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID).catch(() => null);
                     if (guild) {
                         const targetMember = await guild.members.fetch(targetId).catch(() => null);
                         if (targetMember) {
                             await targetMember.roles.remove(process.env.DISCORD_ROLE_ID).catch(console.error);
-                            await targetMember.send("Your temporary provisional access has expired! If you have your @brown.edu email now, please fully verify your account at https://brunov.juainny.com").catch(() => {});
+                            await targetMember.send("Your temporary provisional access has expired! If you have your @brown.edu email now, please fully verify your account at https://brunov.juainny.com").catch(() => { });
                         }
                     }
                 }
-                
+
                 await supabase.from('temp_verifications').update({ status: 'expired' }).eq('discord_id', targetId);
                 console.log(`[Bruno Log] Expired temporary verification for ${targetId}`);
             }
