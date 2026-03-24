@@ -24,6 +24,6 @@ If you ever need to fix something via SSH:
 
 ## 5. Important Commands (Run on Server)
 - **Check if bot is running**: `docker ps`
-- **Restart everything**: `docker compose restart`
-- **Stop everything**: `docker compose down`
-- **Start everything**: `docker compose up -d`
+- **Restart everything**: `docker-compose restart` (or `docker compose restart`)
+- **Stop everything**: `docker-compose down`
+- **Start everything**: `docker-compose up -d`
