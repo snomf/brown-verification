@@ -112,6 +112,13 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN)
                 Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.DISCORD_GUILD_ID),
                 { body: commands },
             );
+            
+            // OPTIONAL: Clear global commands to fix duplicates
+            console.log('Clearing global commands to avoid duplicates...');
+            await rest.put(
+                Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
+                { body: [] },
+            );
         } else {
             console.log('Registering global commands...');
             await rest.put(
