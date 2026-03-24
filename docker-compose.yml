@@ -1,0 +1,22 @@
+services:
+  bruno-bot:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bruno-bot:latest
+    container_name: bruno-bot
+    restart: always
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_ROLE_ID=${DISCORD_ROLE_ID}
+      - DISCORD_LOG_WEBHOOK=${DISCORD_LOG_WEBHOOK}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30 --cleanup --label-enable
