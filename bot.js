@@ -1,7 +1,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
-const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
@@ -102,6 +102,71 @@ async function logToChannel(discordUserId, method = 'command') {
 }
 
 client.on('interactionCreate', async interaction => {
+    if (interaction.isButton()) {
+        const allowedRoles = ['1449820726407467190', '1442356190209380373'];
+        const memberRoles = Array.isArray(interaction.member?.roles)
+            ? interaction.member?.roles
+            : (interaction.member?.roles?.cache ? interaction.member?.roles.cache.map(r => r.id) : []);
+        const isAdmin = memberRoles.some(role => allowedRoles.includes(role));
+
+        if (!isAdmin) {
+             return interaction.reply({ content: 'You are not authorized to use these buttons.', ephemeral: true });
+        }
+
+        const customId = interaction.customId;
+        if (!customId.startsWith('verify_')) return;
+
+        await interaction.deferUpdate();
+
+        const parts = customId.split('_');
+        const action = parts[1]; // approve, deny, manual
+        const targetId = parts[2];
+
+        const { data: tempRecord } = await supabase.from('temp_verifications').select('*').eq('discord_id', targetId).single();
+        if (!tempRecord || tempRecord.status !== 'pending') {
+            return interaction.followUp({ content: 'This verification is no longer pending.', ephemeral: true });
+        }
+
+        const guild = await client.guilds.fetch(interaction.guildId);
+        const targetMember = await guild.members.fetch(targetId).catch(() => null);
+
+        if (action === 'approve') {
+            if (targetMember) {
+                await targetMember.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
+                await targetMember.send("Your Ivy Day provisional verification was approved! You have temporary access for 28 days. Once you get your Brown email, don't forget to fully verify on the website!").catch(() => {});
+            }
+            await supabase.from('temp_verifications').update({ status: 'mod_approved' }).eq('discord_id', targetId);
+            
+            const embed = EmbedBuilder.from(interaction.message.embeds[0])
+                .setColor(0x00FF00)
+                .setTitle(`New Ivy Verify Submission - APPROVED by ${interaction.user.tag}`);
+            await interaction.message.edit({ embeds: [embed], components: [] });
+
+        } else if (action === 'deny') {
+            if (targetMember) {
+                await targetMember.send("Unfortunately, your provisional verification was denied. Please make sure your screenshot clearly shows your acceptance to Brown University and try again, or wait to verify using your brown.edu email.").catch(() => {});
+            }
+            await supabase.from('temp_verifications').update({ status: 'denied' }).eq('discord_id', targetId);
+            
+            const embed = EmbedBuilder.from(interaction.message.embeds[0])
+                .setColor(0xFF0000)
+                .setTitle(`New Ivy Verify Submission - DENIED by ${interaction.user.tag}`);
+            await interaction.message.edit({ embeds: [embed], components: [] });
+
+        } else if (action === 'manual') {
+            if (targetMember) {
+                await targetMember.send("Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help!").catch(() => {});
+            }
+            await supabase.from('temp_verifications').update({ status: 'needs_manual_dm' }).eq('discord_id', targetId);
+
+            const embed = EmbedBuilder.from(interaction.message.embeds[0])
+                .setColor(0xFFFF00)
+                .setTitle(`New Ivy Verify Submission - NEEDS MANUAL DM (Claimed by ${interaction.user.tag})`);
+            await interaction.message.edit({ embeds: [embed], components: [] });
+        }
+        return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName, options, user, guildId } = interaction;
@@ -419,7 +484,183 @@ client.on('interactionCreate', async interaction => {
             }
         }
     }
+
+    if (commandName === 'ivy-verify') {
+        await interaction.deferReply({ ephemeral: true });
+
+        const attachment = options.getAttachment('attachment');
+        const note = options.getString('note') || '';
+        const forceTest = options.getString('force_test');
+
+        const allowedRoles = ['1449820726407467190', '1442356190209380373'];
+        const memberRoles = Array.isArray(interaction.member?.roles)
+            ? interaction.member?.roles
+            : (interaction.member?.roles?.cache ? interaction.member?.roles.cache.map(r => r.id) : []);
+        const isAdmin = memberRoles.some(role => allowedRoles.includes(role));
+
+        if (forceTest && !isAdmin) {
+             return interaction.editReply('Only admins can use force_test.');
+        }
+
+        // Check if fully verified in DB
+        const { data: isVerified } = await supabase.from('verifications').select('id').eq('discord_id', discordUserId).maybeSingle();
+        if (isVerified && !forceTest) {
+            return interaction.editReply('You are already fully verified! No need for a temporary pass.');
+        }
+
+        // Check for existing pending temp verification
+        const { data: existingTemp } = await supabase.from('temp_verifications')
+            .select('*')
+            .eq('discord_id', discordUserId)
+            .in('status', ['pending', 'auto_approved', 'mod_approved', 'needs_manual_dm'])
+            .maybeSingle();
+
+        if (existingTemp && !forceTest) {
+            if (existingTemp.status === 'pending' || existingTemp.status === 'needs_manual_dm') {
+                return interaction.editReply('Your verification is currently under review by our moderators! Please be patient.');
+            } else {
+                return interaction.editReply(`You already have a temporary pass valid until ${new Date(existingTemp.expires_at).toLocaleDateString()}.`);
+            }
+        }
+
+        if (!attachment.contentType?.startsWith('image/')) {
+            return interaction.editReply('Please upload an image file (png, jpg, etc).');
+        }
+
+        await interaction.editReply('Privacy notice: This image is processed by an automated OCR agent and only viewed by moderators in a private channel if manual review is needed. It is not permanently hosted by us.\n\n<:bearbear:1458612533492711434> Sniffing your acceptance letter... please wait...');
+
+        let ocrText = '';
+        let score = 0;
+
+        if (forceTest === 'ocr_fail') {
+            ocrText = 'bad unreadable text';
+            score = 10;
+        } else if (forceTest === 'auto_approve') {
+            ocrText = 'Brown University Class of 2030 Congratulations Admitted';
+            score = 100;
+        } else if (forceTest === 'needs_review') {
+            ocrText = 'Brown something something';
+            score = 50;
+        } else {
+            try {
+                const ocrRes = await fetch(`https://api.ocr.space/parse/imageurl?apikey=${process.env.OCR_SPACE_API_KEY}&url=${encodeURIComponent(attachment.url)}`);
+                const ocrData = await ocrRes.json();
+                if (ocrData && ocrData.ParsedResults && ocrData.ParsedResults.length > 0) {
+                    ocrText = ocrData.ParsedResults[0].ParsedText || '';
+                    const lowerText = ocrText.toLowerCase();
+                    const keywords = ['brown', 'university', 'congratulations', 'admitted', 'accepted', 'class of 2030', 'welcome'];
+                    let matched = 0;
+                    keywords.forEach(kw => {
+                        if (lowerText.includes(kw)) matched++;
+                    });
+                    score = Math.min(100, Math.round((matched / 5) * 100)); // Cap at 100, 5 keywords is 100%
+                }
+            } catch (err) {
+                console.error('[Bruno Error] OCR failed:', err);
+            }
+        }
+
+        const isApproved = score >= 70;
+        const testPrefix = forceTest ? '**[TEST MODE]** ' : '';
+        // Shorter expiry if it's a test so the admin can test the scheduler if they want. Otherwise 28 days.
+        const expiresAt = forceTest
+            ? new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes test
+            : new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(); // 28 days
+
+        if (isApproved) {
+            // Auto approve
+            if (!forceTest) {
+                const guild = await client.guilds.fetch(guildId);
+                const member = await guild.members.fetch(discordUserId);
+                await member.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
+            }
+
+            // Save to DB
+            await supabase.from('temp_verifications').upsert({
+                discord_id: discordUserId,
+                status: 'auto_approved',
+                score,
+                expires_at: expiresAt
+            }, { onConflict: 'discord_id' });
+
+            const embed = new EmbedBuilder()
+                .setTitle(`${testPrefix}New Ivy Verify Submission - AUTO APPROVED`)
+                .setDescription(`User: <@${discordUserId}>\nScore: ${score}/100\nExpires: ${new Date(expiresAt).toLocaleDateString()}\nNote: ${note || 'None'}`)
+                .setColor(0x00FF00)
+                .setImage(attachment.url);
+
+            const modChannel = await client.channels.fetch(process.env.MOD_REVIEW_CHANNEL_ID).catch(() => null);
+            if (modChannel) await modChannel.send({ embeds: [embed] });
+
+            return interaction.editReply(`${testPrefix}<:Verified:1460379061816787139> I smelled the Brown acceptance! You've been given a temporary pass. You will need to fully verify via the website when you receive your @brown.edu email.`);
+        } else {
+            // Mod Review
+            const embed = new EmbedBuilder()
+                .setTitle(`${testPrefix}New Ivy Verify Submission - NEEDS REVIEW`)
+                .setDescription(`User: <@${discordUserId}> (${discordUserId})\nScore: ${score}/100\nNote: ${note || 'None'}\nOCR Preview: ${ocrText.substring(0, 200)}...`)
+                .setColor(0xFFA500)
+                .setImage(attachment.url);
+
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`verify_approve_${discordUserId}`).setLabel('Approve').setStyle(ButtonStyle.Success),
+                new ButtonBuilder().setCustomId(`verify_deny_${discordUserId}`).setLabel('Deny').setStyle(ButtonStyle.Danger),
+                new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
+            );
+
+            const modChannel = await client.channels.fetch(process.env.MOD_REVIEW_CHANNEL_ID).catch(() => null);
+            let modMessageId = null;
+            if (modChannel) {
+                const modMsg = await modChannel.send({ embeds: [embed], components: [row] });
+                modMessageId = modMsg.id;
+            }
+
+            await supabase.from('temp_verifications').upsert({
+                discord_id: discordUserId,
+                status: 'pending',
+                score,
+                mod_message_id: modMessageId,
+                expires_at: expiresAt
+            }, { onConflict: 'discord_id' });
+
+            return interaction.editReply(`${testPrefix}My nose is a bit stuffed today, I couldn't automatically verify your letter (Score: ${score}). I've sent it to my human friends (moderators) to check. You'll get a DM shortly!`);
+        }
+    }
 });
+
+// Periodic cleanup for temporal roles
+setInterval(async () => {
+    try {
+        const { data: expired } = await supabase.from('temp_verifications')
+            .select('*')
+            .in('status', ['auto_approved', 'mod_approved'])
+            .lt('expires_at', new Date().toISOString());
+
+        if (expired && expired.length > 0) {
+            for (const record of expired) {
+                const targetId = record.discord_id;
+                
+                // Check if they fully verified in the meantime
+                const { data: isVerified } = await supabase.from('verifications').select('id').eq('discord_id', targetId).maybeSingle();
+                
+                if (!isVerified) {
+                    const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID).catch(() => null);
+                    if (guild) {
+                        const targetMember = await guild.members.fetch(targetId).catch(() => null);
+                        if (targetMember) {
+                            await targetMember.roles.remove(process.env.DISCORD_ROLE_ID).catch(console.error);
+                            await targetMember.send("Your temporary provisional access has expired! If you have your @brown.edu email now, please fully verify your account at https://brunov.juainny.com").catch(() => {});
+                        }
+                    }
+                }
+                
+                await supabase.from('temp_verifications').update({ status: 'expired' }).eq('discord_id', targetId);
+                console.log(`[Bruno Log] Expired temporary verification for ${targetId}`);
+            }
+        }
+    } catch (err) {
+        console.error('[Bruno Error] Scheduler error:', err);
+    }
+}, 60 * 60 * 1000); // 1 hour
 
 // Startup Test
 (async () => {

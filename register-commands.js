@@ -68,6 +68,36 @@ const commands = [
             }
         ],
     },
+    {
+        name: 'ivy-verify',
+        description: 'Provisional check for recent admits using an acceptance letter screenshot',
+        options: [
+            {
+                name: 'attachment',
+                description: 'Screenshot or photo of your acceptance portal/letter',
+                type: ApplicationCommandOptionType.Attachment,
+                required: true,
+            },
+            {
+                name: 'note',
+                description: 'Optional short note for moderators (max 150 chars)',
+                type: ApplicationCommandOptionType.String,
+                required: false,
+                max_length: 150,
+            },
+            {
+                name: 'force_test',
+                description: 'Admin Only Test Mode',
+                type: ApplicationCommandOptionType.String,
+                required: false,
+                choices: [
+                    { name: 'Auto Approve', value: 'auto_approve' },
+                    { name: 'Needs Review', value: 'needs_review' },
+                    { name: 'OCR Fail', value: 'ocr_fail' }
+                ]
+            }
+        ],
+    },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);

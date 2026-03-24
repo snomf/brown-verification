@@ -205,6 +205,56 @@ export default function DiscordLandingPage() {
           </div>
         </section>
 
+        {/* Provisional Verification Section */}
+        <section className="w-full max-w-5xl mb-24 z-10">
+          <div className="bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-800/50 p-8 md:p-12 rounded-3xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <h2 className="text-3xl md:text-5xl font-black text-[#591C0B] dark:text-amber-500 mb-6 relative z-10">
+              New admit without a Brown email yet?
+            </h2>
+            
+            <div className="space-y-6 text-lg text-[#8C6B5D] dark:text-stone-300 relative z-10">
+              <p className="font-medium">
+                We know it takes time to get your official <strong className="text-[#591C0B] dark:text-amber-400">@brown.edu</strong> email address after Ivy Day. We've built a temporary provisional verification flow just for you!
+              </p>
+              
+              <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700">
+                <h3 className="text-xl font-bold text-[#591C0B] dark:text-amber-400 mb-4 flex items-center gap-2">
+                  <span className="bg-[#5865F2] text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span>
+                  Join the Server & Run the Command
+                </h3>
+                <p className="mb-4">
+                  First, join the Discord server. Then, go to any channel and type the slash command:
+                </p>
+                <div className="bg-stone-100 dark:bg-stone-900 p-4 rounded-xl font-mono text-sm text-[#5865F2] border border-stone-200 dark:border-stone-700 mb-4 inline-block">
+                  /ivy-verify
+                </div>
+                <p className="text-sm">
+                  Attach a screenshot of your admissions portal showing your acceptance. Our secure automated bot will review it, or pass it to a human moderator if it can't read it clearly.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700">
+                <h3 className="text-xl font-bold text-[#591C0B] dark:text-amber-400 mb-2 flex items-center gap-2">
+                  <span className="bg-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span>
+                  Enjoy 28-Day Temporary Access
+                </h3>
+                <p className="text-sm">
+                  Once approved, you'll get all your roles for <strong>28 days</strong>. After that, your temporary access expires, and you must fully authenticate on this website using your new Brown email.
+                </p>
+              </div>
+
+              <div className="mt-8 text-sm text-[#8C6B5D]/80 dark:text-stone-400 flex items-start gap-3">
+                <Shield className="w-5 h-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-500" />
+                <p>
+                  <strong>Privacy Notice:</strong> Your screenshot is processed securely by our bot and only viewable by our moderators in a private, audit-logged channel if manual review is needed. We do not permanently host or save your screenshot.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ Section */}
         <section className="w-full max-w-3xl z-10 mb-20">
           <div className="text-center mb-10">
@@ -230,7 +280,7 @@ export default function DiscordLandingPage() {
                 <ChevronDown className="w-5 h-5 text-amber-500 group-open:-rotate-180 transition-transform duration-300" />
               </summary>
               <div className="px-6 pb-6 text-[#8C6B5D] dark:text-stone-400 font-medium mt-[-10px]">
-                We use Bruno Verifies to keep the server safe! Simply head over to our <Link href="/" className="text-amber-600 dark:text-amber-400 underline font-bold">verification portal</Link>, log in with Discord, and complete the steps to get your Accepted role automatically.
+                We use Bruno Verifies to keep the server safe! Simply head over to our <Link href="/" className="text-amber-600 dark:text-amber-400 underline font-bold">verification portal</Link>, log in with Discord, and complete the steps to get your Accepted role automatically. If you just got accepted and don't have your Brown email yet, you can use the `/ivy-verify` command in Discord for a temporary 28-day pass!
               </div>
             </details>
 

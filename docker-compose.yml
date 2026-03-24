@@ -10,6 +10,9 @@ services:
       - DISCORD_ROLE_ID=${DISCORD_ROLE_ID}
       - DISCORD_LOG_WEBHOOK=${DISCORD_LOG_WEBHOOK}
       - RESEND_API_KEY=${RESEND_API_KEY}
+      - TEMP_ADMIT_ROLE_ID=${TEMP_ADMIT_ROLE_ID}
+      - MOD_REVIEW_CHANNEL_ID=${MOD_REVIEW_CHANNEL_ID}
+      - OCR_SPACE_API_KEY=${OCR_SPACE_API_KEY}
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
