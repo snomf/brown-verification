@@ -1,6 +1,6 @@
 services:
   bruno-bot:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bruno-bot:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/brown-verification:latest
     container_name: bruno-bot
     restart: always
     environment:
