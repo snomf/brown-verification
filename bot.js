@@ -307,6 +307,7 @@ client.on('interactionCreate', async interaction => {
             ALUMNI: '1449839054341410846',
             STUDENT: '1449839196671053895',
             ACCEPTED: process.env.DISCORD_ROLE_ID,
+            CERTIFIED: process.env.DISCORD_CERTIFIED_ROLE_ID,
             '2029': '1449839285887963279',
             '2028': '1449839544877846561',
             '2027': '1449839612317925436',
@@ -335,19 +336,20 @@ client.on('interactionCreate', async interaction => {
                 rolesToAssign.push(ROLES.ALUMNI);
                 successMsg = "Welcome back, Alumni! You've been verified.";
             } else {
-                // Default Accepted Role
+                // Always add the base and certified role for email verification
                 rolesToAssign.push(ROLES.ACCEPTED);
+                rolesToAssign.push(ROLES.CERTIFIED);
 
                 // Add Class Year if provided
                 if (classYear === '2030') {
                     rolesToAssign.push(ROLES.STUDENT);
-                    successMsg = "Welcome, Class of '30! You've been verified.";
+                    successMsg = "<:brunobear:1460379061816787139> Welcome, Class of '30! You've been verified and certified. ROARRRRRRRRR! 🐻";
                 } else if (classYear && ROLES[classYear]) {
                     rolesToAssign.push(ROLES.STUDENT);
                     rolesToAssign.push(ROLES[classYear]);
-                    successMsg = `Welcome, Class of '${classYear.slice(2)}! You've been verified.`;
+                    successMsg = `<:brunobear:1460379061816787139> Welcome back, Class of '${classYear.slice(2)}! You've been verified and certified. 🐻`;
                 } else {
-                    successMsg = "You're verified, Bruno-approved, 100% brunonian, and ready to go!";
+                    successMsg = "You're verified, certified, Bruno-approved, and 100% brunonian! Welcome home! 🐻‍❄️✨";
                 }
             }
 
@@ -438,6 +440,7 @@ client.on('interactionCreate', async interaction => {
                 ALUMNI: '1449839054341410846',
                 STUDENT: '1449839196671053895',
                 ACCEPTED: process.env.DISCORD_ROLE_ID,
+                CERTIFIED: process.env.DISCORD_CERTIFIED_ROLE_ID,
                 '2029': '1449839285887963279',
                 '2028': '1449839544877846561',
                 '2027': '1449839612317925436',
@@ -452,12 +455,14 @@ client.on('interactionCreate', async interaction => {
                 successDetail = 'as **Alumni**';
             } else if (ROLES[verifyType]) {
                 rolesToAssign.push(ROLES.ACCEPTED);
+                rolesToAssign.push(ROLES.CERTIFIED);
                 rolesToAssign.push(ROLES.STUDENT);
                 rolesToAssign.push(ROLES[verifyType]);
-                successDetail = `as **Class of '${verifyType.slice(2)}**`;
+                successDetail = `as **Class of '${verifyType.slice(2)}** (Certified)`;
             } else {
                 rolesToAssign.push(ROLES.ACCEPTED);
-                successDetail = 'with **Accepted** role';
+                rolesToAssign.push(ROLES.CERTIFIED);
+                successDetail = 'with **Accepted** and **Certified** roles';
             }
 
             // Force insert into Supabase

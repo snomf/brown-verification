@@ -12,6 +12,7 @@ export async function POST(req) {
             ALUMNI: '1449839054341410846',
             STUDENT: '1449839196671053895',
             ACCEPTED: process.env.DISCORD_ROLE_ID,
+            CERTIFIED: '1485833884544274513',
             '2029': '1449839285887963279',
             '2028': '1449839544877846561',
             '2027': '1449839612317925436',
@@ -55,14 +56,17 @@ export async function POST(req) {
             rolesToAssign.push(ROLES.ALUMNI);
         } else if (classYear === '2030') {
             rolesToAssign.push(ROLES.ACCEPTED);
+            rolesToAssign.push(ROLES.CERTIFIED);
             rolesToAssign.push(ROLES.STUDENT);
         } else if (classYear && ROLES[classYear]) {
             rolesToAssign.push(ROLES.ACCEPTED);
+            rolesToAssign.push(ROLES.CERTIFIED);
             rolesToAssign.push(ROLES.STUDENT);
             rolesToAssign.push(ROLES[classYear]);
         } else {
-            // Default Case: Just Accepted
+            // Default Case: Just Accepted + Certified
             rolesToAssign.push(ROLES.ACCEPTED);
+            rolesToAssign.push(ROLES.CERTIFIED);
         }
 
         // 4. Discord API Call: Add Roles

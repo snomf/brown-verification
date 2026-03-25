@@ -238,10 +238,23 @@ export default function DiscordLandingPage() {
               <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700">
                 <h3 className="text-xl font-bold text-[#591C0B] dark:text-amber-400 mb-2 flex items-center gap-2">
                   <span className="bg-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span>
-                  Enjoy 28-Day Temporary Access
+                  Provisional Verification (No Email)
                 </h3>
                 <p className="text-sm">
-                  Once approved, you'll get all your roles for <strong>28 days</strong>. After that, your temporary access expires, and you must fully authenticate on this website using your new Brown email.
+                  Once approved, you'll get your roles for <strong>28 days</strong>. Note: This grants "Provisional" status, which allows you to chat but does <strong>not</strong> include the "Certified Brunonian" internal role. Your temporary access will expire unless you fully authenticate with a Brown email later.
+                </p>
+              </div>
+
+              <div className="bg-[#5865F2]/10 dark:bg-[#5865F2]/20 p-6 rounded-2xl border-2 border-[#5865F2] relative group">
+                <div className="absolute -top-3 -right-3 bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-lg group-hover:scale-110 transition-transform">
+                  Recommended
+                </div>
+                <h3 className="text-xl font-bold text-[#5865F2] mb-2 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Certified Verification (With Email)
+                </h3>
+                <p className="text-sm text-[#4A3728] dark:text-stone-200">
+                  Verifying with your <strong>@brown.edu</strong> email on this website is the gold standard. It grants you <strong>Permanent Access</strong> and the exclusive <strong><CheckCircle2 className="inline w-4 h-4" /> Certified Brunonian</strong> role, proving your identity 100% to the community.
                 </p>
               </div>
 
@@ -280,7 +293,11 @@ export default function DiscordLandingPage() {
                 <ChevronDown className="w-5 h-5 text-amber-500 group-open:-rotate-180 transition-transform duration-300" />
               </summary>
               <div className="px-6 pb-6 text-[#8C6B5D] dark:text-stone-400 font-medium mt-[-10px]">
-                We use Bruno Verifies to keep the server safe! Simply head over to our <Link href="/" className="text-amber-600 dark:text-amber-400 underline font-bold">verification portal</Link>, log in with Discord, and complete the steps to get your Accepted role automatically. If you just got accepted and don't have your Brown email yet, you can use the `/ivy-verify` command in Discord for a temporary 28-day pass!
+                There are two ways to get verified! 
+                <ul className="mt-2 space-y-2 list-disc pl-5">
+                  <li><strong>Certified (Best):</strong> Use our <Link href="/" className="text-amber-600 dark:text-amber-400 underline font-bold">verification portal</Link> with your <strong>@brown.edu</strong> email for permanent access and a "Certified" role.</li>
+                  <li><strong>Provisional:</strong> Use the <code>/ivy-verify</code> command in Discord to upload your acceptance letter for a temporary 28-day pass (no email required).</li>
+                </ul>
               </div>
             </details>
 
