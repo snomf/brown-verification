@@ -55,7 +55,7 @@ client.once('ready', () => {
     console.log('Bruno is ONLINE. Sniffing for logs...');
 
     client.user.setPresence({
-        activities: [{ name: 'Custom Status', state: 'Verifying Brown students, ROARRRRRRRRR! 🐻', type: 4 }],
+        activities: [{ name: 'Custom Status', state: 'Verifying Brown students and getting ready for IVY day, ROARRRRRRRRR! 🐻', type: 4 }],
         status: 'online',
     });
 });
@@ -136,7 +136,7 @@ client.on('interactionCreate', async interaction => {
         if (action === 'approve') {
             if (targetMember) {
                 await targetMember.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
-                await targetMember.send("✨ Your Ivy Day provisional verification was **approved**! 🐻 You have temporary access for 28 days. Once you get your Brown email, don't forget to fully verify on the website!").catch(() => { });
+                await targetMember.send("✨ Your Ivy verification was **approved**! 🐻 You have your accepted role, but not your email-verified role. Once you get your Brown email, don't forget to fully verify on the website!").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'mod_approved' }).eq('discord_id', targetId);
             statusText = `✅ APPROVED by ${interaction.user.tag}`;
@@ -144,7 +144,7 @@ client.on('interactionCreate', async interaction => {
 
         } else if (action === 'deny') {
             if (targetMember) {
-                await targetMember.send("❌ Unfortunately, your provisional verification was **denied**. Please make sure your screenshot clearly shows your acceptance to Brown University and try again, or wait to verify using your brown.edu email.").catch(() => { });
+                await targetMember.send("❌ Unfortunately, your uploaded verification was **denied**. Please make sure your screenshot clearly shows your acceptance to Brown University and try again, or wait to verify using your brown.edu email.").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'denied' }).eq('discord_id', targetId);
             statusText = `❌ DENIED by ${interaction.user.tag}`;
@@ -152,7 +152,7 @@ client.on('interactionCreate', async interaction => {
 
         } else if (action === 'manual') {
             if (targetMember) {
-                await targetMember.send("✉️ Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help!").catch(() => { });
+                await targetMember.send("✉️ Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help! ROARRR").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'needs_manual_dm' }).eq('discord_id', targetId);
             statusText = `⚠️ NEEDS MANUAL DM (Claimed by ${interaction.user.tag})`;
