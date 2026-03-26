@@ -111,7 +111,7 @@ export default function PrivacyPage() {
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-blue-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-blue-500 rounded-full"></div></div>
-                                <span>Images uploaded for <strong>/ivy-verify</strong> are processed by an automated OCR tool (OCR.space) and viewed ONLY by human moderators for verification purposes. We do not permanently store these images in our own databases.</span>
+                                <span>Images uploaded for <strong>/ivy-verify</strong> are processed by an automated OCR tool (OCR.space) and viewed ONLY by human moderators for verification purposes, when the image looks off or sketchy. We do not permanently store these images in our own databases.</span>
                             </li>
                         </ul>
                     </section>

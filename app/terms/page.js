@@ -43,7 +43,7 @@ export default function TermsPage() {
                             Bruno Verifies is a student-run project and is <strong>not (though we wish)</strong> officially affiliated with, endorsed by, or connected to Brown University.
                         </p>
                         <p>
-                            We provide this service "as is" without any warranties. While we try our best to keep things running smoothly, things might break and that's FINE.
+                            We provide this service "as is" without any warranties/guarantees. While we try our best to keep things running smoothly, things might break and that's FINE.
                         </p>
                     </section>
 
@@ -52,7 +52,7 @@ export default function TermsPage() {
                         <ul className="grid gap-4">
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-red-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-red-500 rounded-full"></div></div>
-                                <span><strong>Do not</strong> attempt to verify with an email address that does not belong to you. The role is for Brunonians only.</span>
+                                <span><strong>Do not</strong> attempt to verify with an email address that does not belong to you, or an image that you do not own (fake website acceptance). The role is for Brunonians only.</span>
                             </li>
                             <li className="bg-white/5 p-4 rounded-xl flex gap-3 items-start border border-white/5">
                                 <div className="bg-red-500/20 p-1 rounded-full"><div className="w-2 h-2 bg-red-500 rounded-full"></div></div>

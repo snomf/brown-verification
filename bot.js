@@ -514,7 +514,6 @@ client.on('interactionCreate', async interaction => {
 
         const attachment = options.getAttachment('attachment');
         const note = options.getString('note') || '';
-        const forceTest = options.getString('force_test');
 
         const allowedRoles = ['1449820726407467190', '1442356190209380373'];
         const memberRoles = Array.isArray(interaction.member?.roles)
@@ -522,13 +521,9 @@ client.on('interactionCreate', async interaction => {
             : (interaction.member?.roles?.cache ? interaction.member?.roles.cache.map(r => r.id) : []);
         const isAdmin = memberRoles.some(role => allowedRoles.includes(role));
 
-        if (forceTest && !isAdmin) {
-            return interaction.editReply('Only admins can use force_test.');
-        }
-
         // Check if fully verified in DB
         const { data: isVerified } = await supabase.from('verifications').select('id').eq('discord_id', discordUserId).maybeSingle();
-        if (isVerified && !forceTest) {
+        if (isVerified) {
             return interaction.editReply('You are already fully verified! No need for a temporary pass.');
         }
 
@@ -539,62 +534,47 @@ client.on('interactionCreate', async interaction => {
             .in('status', ['pending', 'auto_approved', 'mod_approved', 'needs_manual_dm'])
             .maybeSingle();
 
-        if (existingTemp && !forceTest) {
+        if (existingTemp) {
             if (existingTemp.status === 'pending' || existingTemp.status === 'needs_manual_dm') {
-                return interaction.editReply('Your verification is currently under review by our moderators! Please be patient.');
-            } else {
-                return interaction.editReply(`You already have an accepted pass! Use the website to fully verify with your Brown email when you get it.`);
+                return interaction.editReply('Your verification is already under review by our moderators! Please be patient, or if you sent the wrong image, wait for their response.');
             }
+            // If already approved, we allow them to re-verify if they want to update their info, 
+            // but we should warn them it will overwrite their status.
         }
 
         if (!attachment.contentType?.startsWith('image/')) {
             return interaction.editReply('Please upload an image file (png, jpg, etc).');
         }
 
-        await interaction.editReply('Privacy notice: This image is processed by an automated OCR agent and only viewed by moderators in a private channel if manual review is needed. It is not permanently hosted by us.\n\n<:bearbear:1458612533492711434> Sniffing your acceptance letter... please wait...');
+        await interaction.editReply('Privacy notice: This image is processed by an automated OCR agent and only viewed by moderators in a private channel if manual review is needed. It is not permanently hosted by us.\n\n<:bearbear:1458612533492711434> Sniffing your acceptance letter... please wait...\n\n**Advice:** Make sure your screenshot clearly shows your **name** and **acceptance to Brown University** to ensure fast verification! 🐻');
 
         let ocrText = '';
         let score = 0;
 
-        if (forceTest === 'ocr_fail') {
-            ocrText = 'bad unreadable text';
-            score = 10;
-        } else if (forceTest === 'auto_approve') {
-            ocrText = 'Brown University Class of 2030 Congratulations Admitted';
-            score = 100;
-        } else if (forceTest === 'needs_review') {
-            ocrText = 'Brown something something';
-            score = 50;
-        } else {
-            try {
-                const ocrRes = await fetch(`https://api.ocr.space/parse/imageurl?apikey=${process.env.OCR_SPACE_API_KEY}&url=${encodeURIComponent(attachment.url)}`);
-                const ocrData = await ocrRes.json();
-                if (ocrData && ocrData.ParsedResults && ocrData.ParsedResults.length > 0) {
-                    ocrText = ocrData.ParsedResults[0].ParsedText || '';
-                    const lowerText = ocrText.toLowerCase();
-                    const keywords = ['brown', 'university', 'congratulations', 'admitted', 'accepted', 'class of 2030', 'welcome'];
-                    let matched = 0;
-                    keywords.forEach(kw => {
-                        if (lowerText.includes(kw)) matched++;
-                    });
-                    score = Math.min(100, Math.round((matched / 5) * 100)); // Cap at 100, 5 keywords is 100%
-                }
-            } catch (err) {
-                console.error('[Bruno Error] OCR failed:', err);
+        try {
+            const ocrRes = await fetch(`https://api.ocr.space/parse/imageurl?apikey=${process.env.OCR_SPACE_API_KEY}&url=${encodeURIComponent(attachment.url)}`);
+            const ocrData = await ocrRes.json();
+            if (ocrData && ocrData.ParsedResults && ocrData.ParsedResults.length > 0) {
+                ocrText = ocrData.ParsedResults[0].ParsedText || '';
+                const lowerText = ocrText.toLowerCase();
+                const keywords = ['brown', 'university', 'congratulations', 'admitted', 'accepted', 'class of 2030', 'welcome'];
+                let matched = 0;
+                keywords.forEach(kw => {
+                    if (lowerText.includes(kw)) matched++;
+                });
+                score = Math.min(100, Math.round((matched / 5) * 100)); // Cap at 100, 5 keywords is 100%
             }
+        } catch (err) {
+            console.error('[Bruno Error] OCR failed:', err);
         }
 
-        const isApproved = score >= 70;
-        const testPrefix = forceTest ? '**[TEST MODE]** ' : '';
         const expiresAt = new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString(); // 10 years (effectively permanent)
 
         if (isApproved) {
             // Auto approve
-            if (!forceTest) {
-                const guild = await client.guilds.fetch(guildId);
-                const member = await guild.members.fetch(discordUserId);
-                await member.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
-            }
+            const guild = await client.guilds.fetch(guildId);
+            const member = await guild.members.fetch(discordUserId);
+            await member.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
 
             // Save to DB
             await supabase.from('temp_verifications').upsert({
@@ -605,19 +585,24 @@ client.on('interactionCreate', async interaction => {
             }, { onConflict: 'discord_id' });
 
             const embed = new EmbedBuilder()
-                .setTitle(`${testPrefix}New Ivy Verify Submission - AUTO APPROVED`)
-                .setDescription(`User: <@${discordUserId}>\nScore: **${score}/100**\nExpires: ${new Date(expiresAt).toLocaleDateString()}\nNote: ${note || 'None'}`)
+                .setTitle(`New Ivy Verify Submission - AUTO APPROVED`)
+                .setDescription(`User: <@${discordUserId}>\nScore: **${score}/100**\nExpires: ${new Date(expiresAt).toLocaleDateString()}\nNote: ${note || 'None'}\n\n*This user was automatically granted the role, but you can still deny or flag for manual review if the image looks sketchy.*`)
                 .setColor(0x00FF00)
                 .setThumbnail(attachment.url);
 
-            const modChannel = await client.channels.fetch(process.env.MOD_REVIEW_CHANNEL_ID).catch(() => null);
-            if (modChannel) await modChannel.send({ embeds: [embed] });
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`verify_deny_${discordUserId}`).setLabel('Deny').setStyle(ButtonStyle.Danger),
+                new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
+            );
 
-            return interaction.editReply(`${testPrefix}<:Verified:1460379061816787139> ROARRRRRR, I smell a Brunonian from a mile away! <:brunobear:1460379061816787139> You've been given the accepted role! 🐻 You will still need to fully verify via the website when you receive your @brown.edu email to get the **Certified Brunonian** status!`);
+            const modChannel = await client.channels.fetch(process.env.MOD_REVIEW_CHANNEL_ID).catch(() => null);
+            if (modChannel) await modChannel.send({ embeds: [embed], components: [row] });
+
+            return interaction.editReply(`<:Verified:1460379061816787139> ROARRRRRR, I smell a Brunonian from a mile away! <:brunobear:1460379061816787139> You've been given the accepted role! 🐻 You will still need to fully verify via the website when you receive your @brown.edu email to get the **Certified Brunonian** status!`);
         } else {
             // Mod Review
             const embed = new EmbedBuilder()
-                .setTitle(`${testPrefix}New Ivy Verify Submission - NEEDS REVIEW`)
+                .setTitle(`New Ivy Verify Submission - NEEDS REVIEW`)
                 .setDescription(`User: <@${discordUserId}> (${discordUserId})\nScore: **${score}/100**\nNote: ${note || 'None'}\n\n**OCR Preview:**\n*${ocrText.substring(0, 200)}...*`)
                 .setColor(0xFFA500)
                 .setThumbnail(attachment.url);
@@ -643,7 +628,7 @@ client.on('interactionCreate', async interaction => {
                 expires_at: expiresAt
             }, { onConflict: 'discord_id' });
 
-            return interaction.editReply(`${testPrefix}ROARRRRRR, I couldn't automatically verify your letter, something about it makes me give it a score of **${score}**. 🧐 I've sent it to real brunonians to check. You'll get a DM shoRRRRRRRtly! 🐻‍❄️`);
+            return interaction.editReply(`ROARRRRRR, I couldn't automatically verify your letter, something about it makes me give it a score of **${score}**. 🧐 I've sent it to real brunonians to check. You'll get a DM shoRRRRRRRtly! 🐻‍❄️`);
         }
     }
 });

@@ -69,15 +69,15 @@ export default function DiscordLandingPage() {
         <section className="w-full max-w-4xl text-center mb-24 relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 font-bold text-sm mb-6 shadow-sm border border-amber-200 dark:border-amber-800/50">
             <Shield className="w-4 h-4" />
-            <span>Official Class of 2030 Network</span>
+            <span>Official Class of 2030 Server</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black text-[#591C0B] dark:text-amber-500 mb-6 tracking-tight leading-tight">
-            Welcome Brown <br className="hidden md:block" /> Class of 2030 🐻
+            Welcome Brown <br className="hidden md:block" /> Class of 2030 (& Others) 🐻
           </h1>
 
           <p className="text-xl md:text-2xl text-[#8C6B5D] dark:text-stone-300 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
-            Join the largest verified community for incoming students. Meet your future classmates, find roommates, and stay updated.
+            Join the largest verified discord community for incoming students. Meet your future classmates, find friends, and stay updated!
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -96,7 +96,7 @@ export default function DiscordLandingPage() {
               href="/"
               className="w-full sm:w-auto px-10 py-5 bg-white dark:bg-stone-800 text-[#591C0B] dark:text-stone-200 text-xl font-bold rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all border-2 border-[#591C0B]/20 dark:border-stone-600 flex items-center justify-center gap-3"
             >
-              Verify Account
+              Verify with Bruno Verifies
             </Link>
           </div>
           <p className="mt-4 text-sm text-[#8C6B5D]/80 dark:text-stone-400 font-semibold uppercase tracking-widest">Dozens of students already joined! You're next, pls?</p>
@@ -108,7 +108,7 @@ export default function DiscordLandingPage() {
             <h2 className="text-3xl md:text-5xl font-black text-[#591C0B] dark:text-amber-500 mb-4">
               Discord vs. Instagram
             </h2>
-            <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">Why we moved away from instagram DM groups.</p>
+            <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">Why we moved away from instagram DM groups. (and why you should not join more of them)</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
@@ -124,19 +124,19 @@ export default function DiscordLandingPage() {
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <span className="text-rose-500 font-bold mt-1">✕</span>
-                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">250 member limit forces multiple groups</span>
+                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">250 member limit forces multiple groups that you're bound to miss</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-rose-500 font-bold mt-1">✕</span>
-                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">Chaotic single stream of messages, can never catch up I swear</span>
+                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">Chaotic single stream of messages, can never catch up I swear!</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-rose-500 font-bold mt-1">✕</span>
-                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">Random internet strangers can join, Brown's ED groupchat has Stanford students (where everyone else is)</span>
+                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">Random internet strangers can join, Brown's ED groupchat has Stanford students (where real Brunonians are)</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-rose-500 font-bold mt-1">✕</span>
-                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">No voice or screen-sharing casually, or you could get annoying calls</span>
+                  <span className="text-[#8C6B5D] dark:text-stone-300 font-semibold">No voice or screen-sharing casually. Instead, you'll get annoying calls from random people (I had to mute it)</span>
                 </li>
               </ul>
             </div>
@@ -158,7 +158,7 @@ export default function DiscordLandingPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#5865F2] shrink-0 mt-0.5" />
-                  <span className="text-[#4A3728] dark:text-stone-200 font-bold">Bot-verified authentic students only for student-only channels</span>
+                  <span className="text-[#4A3728] dark:text-stone-200 font-bold">Bruno-verified authentic students only for student-only channels, and you can check their email verification role</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#5865F2] shrink-0 mt-0.5" />
@@ -175,7 +175,7 @@ export default function DiscordLandingPage() {
             <h2 className="text-3xl md:text-5xl font-black text-[#591C0B] dark:text-amber-500 mb-4">
               Server Features
             </h2>
-            <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">People that are at the same step you are, where you're going.</p>
+            <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">People that are at the same step you are, where you're going. (and people who've already been there to talk to)</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -209,16 +209,16 @@ export default function DiscordLandingPage() {
         <section className="w-full max-w-5xl mb-24 z-10">
           <div className="bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-800/50 p-8 md:p-12 rounded-3xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            
+
             <h2 className="text-3xl md:text-5xl font-black text-[#591C0B] dark:text-amber-500 mb-6 relative z-10">
               New admit without a Brown email yet?
             </h2>
-            
+
             <div className="space-y-6 text-lg text-[#8C6B5D] dark:text-stone-300 relative z-10">
               <p className="font-medium">
                 We know it takes time to get your official <strong className="text-[#591C0B] dark:text-amber-400">@brown.edu</strong> email address after Ivy Day. We've built a temporary provisional verification flow just for you!
               </p>
-              
+
               <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700">
                 <h3 className="text-xl font-bold text-[#591C0B] dark:text-amber-400 mb-4 flex items-center gap-2">
                   <span className="bg-[#5865F2] text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span>
@@ -293,7 +293,7 @@ export default function DiscordLandingPage() {
                 <ChevronDown className="w-5 h-5 text-amber-500 group-open:-rotate-180 transition-transform duration-300" />
               </summary>
               <div className="px-6 pb-6 text-[#8C6B5D] dark:text-stone-400 font-medium mt-[-10px]">
-                There are two ways to get verified! 
+                There are two ways to get verified!
                 <ul className="mt-2 space-y-2 list-disc pl-5">
                   <li><strong>Certified (Best):</strong> Use our <Link href="/" className="text-amber-600 dark:text-amber-400 underline font-bold">verification portal</Link> with your <strong>@brown.edu</strong> email for permanent access and a "Certified" role.</li>
                   <li><strong>Provisional:</strong> Use the <code>/ivy-verify</code> command in Discord to upload your acceptance letter for permanent access to the server (no email required).</li>
