@@ -136,7 +136,7 @@ client.on('interactionCreate', async interaction => {
         if (action === 'approve') {
             if (targetMember) {
                 await targetMember.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
-                await targetMember.send("✨ Your Ivy verification was **approved**! 🐻 You have your accepted role, but not your email-verified role. Once you get your Brown email, don't forget to fully verify on the website!").catch(() => { });
+                await targetMember.send("✨ Your Ivy verification was **approved**! 🐻 You now have the accepted role! Once you get your Brown email, don't forget to fully verify on the website to get your **Certified Brunonian** role!").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'mod_approved' }).eq('discord_id', targetId);
             statusText = `✅ APPROVED by ${interaction.user.tag}`;
@@ -543,7 +543,7 @@ client.on('interactionCreate', async interaction => {
             if (existingTemp.status === 'pending' || existingTemp.status === 'needs_manual_dm') {
                 return interaction.editReply('Your verification is currently under review by our moderators! Please be patient.');
             } else {
-                return interaction.editReply(`You already have a temporary pass valid until ${new Date(existingTemp.expires_at).toLocaleDateString()}.`);
+                return interaction.editReply(`You already have an accepted pass! Use the website to fully verify with your Brown email when you get it.`);
             }
         }
 
@@ -586,10 +586,7 @@ client.on('interactionCreate', async interaction => {
 
         const isApproved = score >= 70;
         const testPrefix = forceTest ? '**[TEST MODE]** ' : '';
-        // Shorter expiry if it's a test so the admin can test the scheduler if they want. Otherwise 28 days.
-        const expiresAt = forceTest
-            ? new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes test
-            : new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(); // 28 days
+        const expiresAt = new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString(); // 10 years (effectively permanent)
 
         if (isApproved) {
             // Auto approve
@@ -616,7 +613,7 @@ client.on('interactionCreate', async interaction => {
             const modChannel = await client.channels.fetch(process.env.MOD_REVIEW_CHANNEL_ID).catch(() => null);
             if (modChannel) await modChannel.send({ embeds: [embed] });
 
-            return interaction.editReply(`${testPrefix}<:Verified:1460379061816787139> ROARRRRRR, I smell a Brunonian from a mile away! <:brunobear:1460379061816787139> You've been given a temporary pass until **${new Date(expiresAt).toLocaleDateString()}**. 🐻 You will need to fully verify via the website when you receive your @brown.edu email!`);
+            return interaction.editReply(`${testPrefix}<:Verified:1460379061816787139> ROARRRRRR, I smell a Brunonian from a mile away! <:brunobear:1460379061816787139> You've been given the accepted role! 🐻 You will still need to fully verify via the website when you receive your @brown.edu email to get the **Certified Brunonian** status!`);
         } else {
             // Mod Review
             const embed = new EmbedBuilder()
@@ -651,40 +648,7 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// Periodic cleanup for temporal roles
-setInterval(async () => {
-    try {
-        const { data: expired } = await supabase.from('temp_verifications')
-            .select('*')
-            .in('status', ['auto_approved', 'mod_approved'])
-            .lt('expires_at', new Date().toISOString());
-
-        if (expired && expired.length > 0) {
-            for (const record of expired) {
-                const targetId = record.discord_id;
-
-                // Check if they fully verified in the meantime
-                const { data: isVerified } = await supabase.from('verifications').select('id').eq('discord_id', targetId).maybeSingle();
-
-                if (!isVerified) {
-                    const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID).catch(() => null);
-                    if (guild) {
-                        const targetMember = await guild.members.fetch(targetId).catch(() => null);
-                        if (targetMember) {
-                            await targetMember.roles.remove(process.env.DISCORD_ROLE_ID).catch(console.error);
-                            await targetMember.send("Your temporary provisional access has expired! If you have your @brown.edu email now, please fully verify your account at https://brunov.juainny.com").catch(() => { });
-                        }
-                    }
-                }
-
-                await supabase.from('temp_verifications').update({ status: 'expired' }).eq('discord_id', targetId);
-                console.log(`[Bruno Log] Expired temporary verification for ${targetId}`);
-            }
-        }
-    } catch (err) {
-        console.error('[Bruno Error] Scheduler error:', err);
-    }
-}, 60 * 60 * 1000); // 1 hour
+// Expiry Role logic removed as per user request. Users keep the accepted role.
 
 // Startup Test
 (async () => {

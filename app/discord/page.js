@@ -241,7 +241,7 @@ export default function DiscordLandingPage() {
                   Provisional Verification (No Email)
                 </h3>
                 <p className="text-sm">
-                  Once approved, you'll get your roles for <strong>28 days</strong>. Note: This grants "Provisional" status, which allows you to chat but does <strong>not</strong> include the "Certified Brunonian" internal role. Your temporary access will expire unless you fully authenticate with a Brown email later.
+                  Once approved, you'll get your roles for <strong>permanent access</strong>. Note: This grants "Provisional" status, which allows you to chat but does <strong>not</strong> include the "Certified Brunonian" internal role. You can still fully authenticate with a Brown email later to get the certified status.
                 </p>
               </div>
 
@@ -254,7 +254,7 @@ export default function DiscordLandingPage() {
                   Certified Verification (With Email)
                 </h3>
                 <p className="text-sm text-[#4A3728] dark:text-stone-200">
-                  Verifying with your <strong>@brown.edu</strong> email on this website is the gold standard. It grants you <strong>Permanent Access</strong> and the exclusive <strong><CheckCircle2 className="inline w-4 h-4" /> Certified Brunonian</strong> role, proving your identity 100% to the community.
+                  Verifying with your <strong>@brown.edu</strong> email on this website is the gold standard. It grants you the exclusive <strong><CheckCircle2 className="inline w-4 h-4" /> Certified Brunonian</strong> role, proving your identity 100% to the community.
                 </p>
               </div>
 
@@ -296,7 +296,7 @@ export default function DiscordLandingPage() {
                 There are two ways to get verified! 
                 <ul className="mt-2 space-y-2 list-disc pl-5">
                   <li><strong>Certified (Best):</strong> Use our <Link href="/" className="text-amber-600 dark:text-amber-400 underline font-bold">verification portal</Link> with your <strong>@brown.edu</strong> email for permanent access and a "Certified" role.</li>
-                  <li><strong>Provisional:</strong> Use the <code>/ivy-verify</code> command in Discord to upload your acceptance letter for a temporary 28-day pass (no email required).</li>
+                  <li><strong>Provisional:</strong> Use the <code>/ivy-verify</code> command in Discord to upload your acceptance letter for permanent access to the server (no email required).</li>
                 </ul>
               </div>
             </details>
