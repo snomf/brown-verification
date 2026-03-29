@@ -631,6 +631,60 @@ client.on('interactionCreate', async interaction => {
             return interaction.editReply(`ROARRRRRR, I couldn't automatically verify your letter, something about it makes me give it a score of **${score}**. 🧐 I've sent it to real brunonians to check. You'll get a DM shoRRRRRRRtly! 🐻‍❄️`);
         }
     }
+
+    if (commandName === 'manage') {
+        const TARGET_USER_ID = '547599059024740374';
+        const TARGET_CHANNEL_ID = '1449864433344975071';
+
+        if (interaction.user.id !== TARGET_USER_ID || interaction.channelId !== TARGET_CHANNEL_ID) {
+            return interaction.reply({ content: '<:BearShock:1460381158134120529> ROAR! You are not authorized to use this command here.', ephemeral: true });
+        }
+
+        const subcommand = options.getSubcommand();
+
+        if (subcommand === 'status') {
+            const text = options.getString('text');
+            const presence = options.getString('presence');
+
+            try {
+                await client.user.setPresence({
+                    activities: [{ name: 'Custom Status', state: text, type: 4 }],
+                    status: presence,
+                });
+                return interaction.reply({ content: `✅ Status updated to: **${presence}** | **${text}**`, ephemeral: true });
+            } catch (err) {
+                console.error('[Bruno Error] Failed to update status:', err);
+                return interaction.reply({ content: '❌ Failed to update status.', ephemeral: true });
+            }
+        }
+
+        if (subcommand === 'remind') {
+            const targetUser = options.getUser('user');
+            if (!targetUser) return interaction.reply({ content: 'Please specify a user.', ephemeral: true });
+
+            try {
+                const remindEmbed = new EmbedBuilder()
+                    .setTitle('Verification Reminder 🐻')
+                    .setDescription(`Hey <@${targetUser.id}>! Remember to verify to get full access to the Brown University server!`)
+                    .addFields(
+                        { name: '🌐 Website', value: '[brunov.juainny.com](https://brunov.juainny.com) (Best for @brown.edu emails)', inline: false },
+                        { name: '💬 Slash Command', value: 'Use `/verify` right here in the server!', inline: false },
+                        { name: '📄 No Brown Email?', value: 'Use `/ivy-verify` and upload a screenshot of your acceptance letter!', inline: false }
+                    )
+                    .setColor(0x591C0B)
+                    .setThumbnail('https://brunov.juainny.com/bruno-bear.png'); // Assuming this exists or using a placeholder
+
+                await targetUser.send({ embeds: [remindEmbed] }).catch(async () => {
+                   return interaction.reply({ content: `❌ Could not send DM to <@${targetUser.id}>. Their DMs might be closed.`, ephemeral: true });
+                });
+
+                return interaction.reply({ content: `✅ Sent a verification reminder to <@${targetUser.id}>!`, ephemeral: true });
+            } catch (err) {
+                console.error('[Bruno Error] Failed to send reminder:', err);
+                return interaction.reply({ content: '❌ Failed to send reminder.', ephemeral: true });
+            }
+        }
+    }
 });
 
 // Expiry Role logic removed as per user request. Users keep the accepted role.

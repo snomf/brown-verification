@@ -87,6 +87,49 @@ const commands = [
             }
         ],
     },
+    {
+        name: 'manage',
+        description: 'Management commands (Bot status, reminders, etc.)',
+        options: [
+            {
+                name: 'status',
+                description: 'Change the bot status and presence',
+                type: ApplicationCommandOptionType.Subcommand,
+                options: [
+                    {
+                        name: 'text',
+                        description: 'The status text to set',
+                        type: ApplicationCommandOptionType.String,
+                        required: true,
+                    },
+                    {
+                        name: 'presence',
+                        description: 'The online status (online, dnd, idle)',
+                        type: ApplicationCommandOptionType.String,
+                        required: true,
+                        choices: [
+                            { name: 'Online', value: 'online' },
+                            { name: 'DND', value: 'dnd' },
+                            { name: 'Idle', value: 'idle' },
+                        ],
+                    },
+                ],
+            },
+            {
+                name: 'remind',
+                description: 'Send a verification reminder to a specific user',
+                type: ApplicationCommandOptionType.Subcommand,
+                options: [
+                    {
+                        name: 'user',
+                        description: 'The user to remind',
+                        type: ApplicationCommandOptionType.User,
+                        required: true,
+                    },
+                ],
+            },
+        ],
+    },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
