@@ -664,18 +664,18 @@ client.on('interactionCreate', async interaction => {
 
             try {
                 const remindEmbed = new EmbedBuilder()
-                    .setTitle('Verification Reminder 🐻')
-                    .setDescription(`Hey <@${targetUser.id}>! Remember to verify to get full access to the Brown University server!`)
+                    .setTitle('Verification Reminder 🐻 ROARRRRRR')
+                    .setDescription(`Hey <@${targetUser.id}>! Remember to verify to get full access to the Brownies & Applicants server (+ the role)! <:bruno_bear:1460379061816787139>`)
                     .addFields(
-                        { name: '🌐 Website', value: '[brunov.juainny.com](https://brunov.juainny.com) (Best for @brown.edu emails)', inline: false },
-                        { name: '💬 Slash Command', value: 'Use `/verify` right here in the server!', inline: false },
-                        { name: '📄 No Brown Email?', value: 'Use `/ivy-verify` and upload a screenshot of your acceptance letter!', inline: false }
+                        { name: '🌐 Website (recommended)', value: '[brunov.juainny.com](https://brunov.juainny.com) (Best for @brown.edu emails)', inline: false },
+                        { name: '💬 Slash Command', value: 'Use `/verify` right in the server!', inline: false },
+                        { name: '📄 No Brown Email? (not recommended)', value: 'Use `/ivy-verify` and upload a screenshot of your acceptance letter! ', inline: false }
                     )
                     .setColor(0x591C0B)
                     .setThumbnail('https://brunov.juainny.com/bruno-bear.png'); // Assuming this exists or using a placeholder
 
                 await targetUser.send({ embeds: [remindEmbed] }).catch(async () => {
-                   return interaction.reply({ content: `❌ Could not send DM to <@${targetUser.id}>. Their DMs might be closed.`, ephemeral: true });
+                    return interaction.reply({ content: `❌ Could not send DM to <@${targetUser.id}>. Their DMs might be closed.`, ephemeral: true });
                 });
 
                 return interaction.reply({ content: `✅ Sent a verification reminder to <@${targetUser.id}>!`, ephemeral: true });
