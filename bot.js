@@ -569,6 +569,8 @@ client.on('interactionCreate', async interaction => {
         }
 
         const expiresAt = new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString(); // 10 years (effectively permanent)
+        
+        const isApproved = score >= 80;
 
         if (isApproved) {
             // Auto approve
@@ -595,7 +597,8 @@ client.on('interactionCreate', async interaction => {
                 new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
             );
 
-            const modChannel = await client.channels.fetch(process.env.MOD_REVIEW_CHANNEL_ID).catch(() => null);
+            const modChannelId = process.env.MOD_REVIEW_CHANNEL_ID;
+            const modChannel = modChannelId ? await client.channels.fetch(modChannelId).catch(() => null) : null;
             if (modChannel) await modChannel.send({ embeds: [embed], components: [row] });
 
             return interaction.editReply(`<:Verified:1460379061816787139> ROARRRRRR, I smell a Brunonian from a mile away! <:brunobear:1460379061816787139> You've been given the accepted role! 🐻 You will still need to fully verify via the website when you receive your @brown.edu email to get the **Certified Brunonian** status!`);
@@ -613,7 +616,8 @@ client.on('interactionCreate', async interaction => {
                 new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
             );
 
-            const modChannel = await client.channels.fetch(process.env.MOD_REVIEW_CHANNEL_ID).catch(() => null);
+            const modChannelId = process.env.MOD_REVIEW_CHANNEL_ID;
+            const modChannel = modChannelId ? await client.channels.fetch(modChannelId).catch(() => null) : null;
             let modMessageId = null;
             if (modChannel) {
                 const modMsg = await modChannel.send({ embeds: [embed], components: [row] });
