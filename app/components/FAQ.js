@@ -18,7 +18,7 @@ const faqData = [
   },
   {
     question: "I didn't receive my code. What should I do?",
-    answer: "Check your spam folder first. If it's not there, wait 60 seconds and use the 'Resend Code' button. Make sure you entered your username correctly (the part before @brown.edu)."
+    answer: "Check your spam folder first. If it's not there, wait 60 seconds and use the 'Resend Code' button. Make sure you entered your username correctly (the part before @brown.edu). If you can't get it to work, talk to a mod in the server!"
   },
   {
     question: "Can I verify multiple Discord accounts with one email?",
@@ -56,9 +56,8 @@ export default function FAQ() {
               )}
             </button>
             <div
-              className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                openIndex === index ? 'max-h-48' : 'max-h-0'
-              }`}
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${openIndex === index ? 'max-h-48' : 'max-h-0'
+                }`}
             >
               <div className="p-5 pt-0 text-[#8C6B5D] dark:text-stone-400 font-medium leading-relaxed">
                 {item.answer}
