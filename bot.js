@@ -669,7 +669,7 @@ client.on('interactionCreate', async interaction => {
             try {
                 const remindEmbed = new EmbedBuilder()
                     .setTitle('Verification Reminder 🐻 ROARRRRRR')
-                    .setDescription(`Hey <@${targetUser.id}>! Remember to verify to get full access to the Brownies & Applicants server (+ the role)! <:bruno_bear:1460379061816787139>`)
+                    .setDescription(`Hey <@${targetUser.id}>! Remember to verify to get full access to the Brownies server (+ the role)! <:bruno_bear:1460379061816787139>`)
                     .addFields(
                         { name: '🌐 Website (recommended)', value: '[brunov.juainny.com](https://brunov.juainny.com) (Best for @brown.edu emails)', inline: false },
                         { name: '💬 Slash Command', value: 'Use `/verify` right in the server!', inline: false },

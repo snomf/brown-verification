@@ -3,10 +3,10 @@ import { Shield, Users, MessageSquare, Calendar, CheckCircle2, ChevronDown, Inst
 import ThemeToggle from '../components/ThemeToggle';
 
 export const metadata = {
-  title: "Brown University Discord | Class of 2030 | Verified Students (& Other Applicants)",
+  title: "Brown University Discord | Class of 2030 | Verified Students",
   description: "Join the official unofficial verified Brown University Discord server for the Class of 2030. Connect with classmates, access organized channels, voice chat, and more.",
   openGraph: {
-    title: "Brown University Discord | Class of 2030 | Verified Students (& Other Applicants)",
+    title: "Brown University Discord | Class of 2030 | Verified Students",
     description: "Connect with the Brown University Class of 2030 in the official unofficial Discord server. Enjoy organized channels, voice chat, and more.",
     url: 'https://brown.juainny.com/discord',
     siteName: 'Brown University Class of 2030 Discord',
@@ -73,7 +73,7 @@ export default function DiscordLandingPage() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black text-[#591C0B] dark:text-amber-500 mb-6 tracking-tight leading-tight">
-            Welcome Brown <br className="hidden md:block" /> Class of 2030 (& Others) 🐻
+            Welcome Brown <br className="hidden md:block" /> Class of 2030 🐻
           </h1>
 
           <p className="text-xl md:text-2xl text-[#8C6B5D] dark:text-stone-300 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">

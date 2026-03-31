@@ -30,7 +30,7 @@ export default function TermsPage() {
                             By using Bruno Verifies, you agree to these <span className="text-red-400 underline decoration-wavy">simple rules (and the ones in the server, of course).</span>
                         </p>
                         <p>
-                            This service is designed to verify your status as a Brown University student on our Brownies & Applicants server. We want to keep this community safe and authentic.
+                            This service is designed to verify your status as a Brown University student on our Brownies server. We want to keep this community safe and authentic.
                         </p>
                     </section>
 

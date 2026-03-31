@@ -125,7 +125,7 @@ export default function Home() {
             Bruno Verifies
           </h1>
           <p className="text-lg text-[#8C6B5D] dark:text-stone-400 font-medium">
-            The Bruno-certified way to get your accepted role & email-verified role in the Brownies & Applicants server.
+            The Bruno-certified way to get your accepted role & email-verified role in the Brownies server.
           </p>
         </div>
 
