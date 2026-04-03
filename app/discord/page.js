@@ -67,7 +67,7 @@ export default function DiscordLandingPage() {
 
         {/* Hero Section */}
         <section className="w-full max-w-4xl text-center mb-24 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-4 mb-8">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 font-bold text-sm shadow-sm border border-amber-200 dark:border-amber-800/50">
               <Shield className="w-4 h-4" />
               <span>Verified Class of 2030 Community</span>
