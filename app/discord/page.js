@@ -4,10 +4,10 @@ import ThemeToggle from '../components/ThemeToggle';
 
 export const metadata = {
   title: "Brown University Discord | Class of 2030 | Verified Students",
-  description: "Join the official unofficial verified Brown University Discord server for the Class of 2030. Connect with classmates, access organized channels, voice chat, and more.",
+  description: "Join the verified Brown University Discord server for the Class of 2030, part of the Brown Student Hub. Connect with classmates, access organized channels, voice chat, and more.",
   openGraph: {
     title: "Brown University Discord | Class of 2030 | Verified Students",
-    description: "Connect with the Brown University Class of 2030 in the official unofficial Discord server. Enjoy organized channels, voice chat, and more.",
+    description: "Connect with the Brown University Class of 2030 in the verified community Discord server. Enjoy organized channels, voice chat, and more.",
     url: 'https://brown.juainny.com/discord',
     siteName: 'Brown University Class of 2030 Discord',
     images: [
@@ -24,7 +24,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Brown University Discord | Class of 2030 | Verified Students",
-    description: "Join the official unofficial verified Brown University Discord server for the Class of 2030. Connect with classmates, access organized channels, voice chat.",
+    description: "Join the verified Brown University Discord server for the Class of 2030. Connect with classmates, access organized channels, voice chat.",
     images: ['/verified-bear.png'],
   },
 };
@@ -33,7 +33,7 @@ const schemaMarkup = {
   "@context": "https://schema.org",
   "@type": "WebPage",
   "name": "Brown University Discord | Class of 2030",
-  "description": "The official verified Discord server for Brown University Class of 2030 students.",
+  "description": "The verified community Discord server for Brown University Class of 2030 students.",
   "url": "https://brown.juainny.com/discord",
   "publisher": {
     "@type": "Organization",
@@ -67,9 +67,15 @@ export default function DiscordLandingPage() {
 
         {/* Hero Section */}
         <section className="w-full max-w-4xl text-center mb-24 relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 font-bold text-sm mb-6 shadow-sm border border-amber-200 dark:border-amber-800/50">
-            <Shield className="w-4 h-4" />
-            <span>Official Class of 2030 Server</span>
+          <div className="flex flex-col md:flex-row items-center gap-4 mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 font-bold text-sm shadow-sm border border-amber-200 dark:border-amber-800/50">
+              <Shield className="w-4 h-4" />
+              <span>Verified Class of 2030 Community</span>
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 font-bold text-sm shadow-sm border border-blue-200 dark:border-blue-800/50">
+              <img src="https://cdn3.emoji.gg/emojis/5269-student-hub.png" alt="Student Hub" className="w-4 h-4" />
+              <span>Part of Brown Student Hub</span>
+            </div>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black text-[#591C0B] dark:text-amber-500 mb-6 tracking-tight leading-tight">
@@ -145,7 +151,7 @@ export default function DiscordLandingPage() {
             <div className="bg-white dark:bg-stone-800 p-8 rounded-3xl border-2 border-[#5865F2] shadow-[8px_8px_0px_0px_#5865F2] relative overflow-hidden group">
               <h3 className="text-2xl font-black text-[#5865F2] mb-6 flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#5865F2] block"></span>
-                The Official Unofficial Discord
+                The Brown Community Discord
               </h3>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
@@ -283,7 +289,7 @@ export default function DiscordLandingPage() {
                 <ChevronDown className="w-5 h-5 text-amber-500 group-open:-rotate-180 transition-transform duration-300" />
               </summary>
               <div className="px-6 pb-6 text-[#8C6B5D] dark:text-stone-400 font-medium mt-[-10px]">
-                The Brown University Class of 2030 Discord is the central hub for incoming freshmen. It's an online community where you can chat, ask questions, find roommates, and connect with your future classmates before stepping on campus.
+                The Brown University Class of 2030 Discord is the central community hub for incoming freshmen. It's an online community where you can chat, ask questions, find roommates, and connect with your future classmates before stepping on campus.
               </div>
             </details>
 
