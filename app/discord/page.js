@@ -74,7 +74,7 @@ export default function DiscordLandingPage() {
             </div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 font-bold text-sm shadow-sm border border-blue-200 dark:border-blue-800/50">
               <img src="https://cdn3.emoji.gg/emojis/5269-student-hub.png" alt="Student Hub" className="w-4 h-4" />
-              <span>Part of Brown Student Hub</span>
+              <span>Brown Student Hub Member</span>
             </div>
           </div>
 
