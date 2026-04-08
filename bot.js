@@ -7,11 +7,11 @@ const { getServerConfig } = require('./lib/config');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 
 /**
  * BRUNO VERIFIES - PERSISTENT BOT (RESTORED)
- * Version: 1.0.1
+ * Version: 1.0.2
  * This script handles Discord commands for verify and /confirm.
  */
 
@@ -59,7 +59,7 @@ async function isUserAdmin(user, settings) {
     }
 }
 
-client.once('clientReady', async () => {
+client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
     console.log('Bruno is ONLINE. Sniffing for logs...');
 
@@ -113,7 +113,7 @@ async function logToChannel(discordUserId, method = 'command') {
 
 client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) {
-        const settings = await getServerSettings();
+        const settings = await getServerConfig();
         const allowedRoles = settings.allowedModRoleIds;
         const memberRoles = Array.isArray(interaction.member?.roles)
             ? interaction.member?.roles
@@ -146,7 +146,7 @@ client.on('interactionCreate', async interaction => {
 
         if (action === 'approve') {
             if (targetMember) {
-                await targetMember.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
+                await targetMember.roles.add(settings.roles.ACCEPTED).catch(console.error);
                 await targetMember.send("✨ Your Ivy verification was **approved**! 🐻 You now have the accepted role! Once you get your Brown email, don't forget to fully verify on the website to get your **Certified Brunonian** role!").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'mod_approved' }).eq('discord_id', targetId);
@@ -272,7 +272,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             // Send Styled Email
-            const settings = await getServerSettings();
+            const settings = await getServerConfig();
             const resendResponse = await resend.emails.send({
                 from: settings.emailFromAddress,
                 to: email,
@@ -314,7 +314,7 @@ client.on('interactionCreate', async interaction => {
         const classYear = options.getString('class_year'); // Optional
 
         // Load ROLES dynamically
-        const settings = await getServerSettings();
+        const settings = await getServerConfig();
         const ROLES = settings.roles;
 
         try {
@@ -421,7 +421,7 @@ client.on('interactionCreate', async interaction => {
             // Immediate Defer to prevent timeout
             await interaction.deferReply({ ephemeral: false });
 
-            const settings = await getServerSettings();
+            const settings = await getServerConfig();
             const allowedRoles = settings.adminRoleIds || [];
             const rolesObj = interaction.member?.roles;
             // Handle both GuildMember (manager) and API (array)
@@ -517,7 +517,7 @@ client.on('interactionCreate', async interaction => {
 
     if (commandName === 'ivy-verify') {
         await interaction.deferReply({ ephemeral: true });
-        const settings = await getServerSettings();
+        const settings = await getServerConfig();
         const attachment = options.getAttachment('attachment');
         const note = options.getString('note') || '';
 
