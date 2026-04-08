@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { hashEmail } from '@/lib/crypto';
+import { getServerConfig } from '@/lib/config';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -15,7 +16,11 @@ export async function POST(req) {
 
         // 1. Basic Validation
         const emailLower = email?.toLowerCase() || '';
-        const isAllowedDomain = emailLower.endsWith('@brown.edu') || emailLower.endsWith('@alumni.brown.edu');
+        const settings = await getServerConfig();
+        const allowedDomains = settings.allowedEmailDomains; // Array like ['@brown.edu', '@alumni.brown.edu']
+        
+        const isAllowedDomain = allowedDomains.some(domain => emailLower.endsWith(domain));
+        
         if (!email || !isAllowedDomain) {
             console.warn('[Verify Log] 400: Invalid email domain (PII hidden)');
             return NextResponse.json({ message: 'Only @brown.edu or @alumni.brown.edu emails are allowed. Are you lost, friend?' }, { status: 400 });
@@ -62,7 +67,7 @@ export async function POST(req) {
 
         // 3. Generate Code
         console.log('[Verify Log] Generating verification code...');
-        const isAlumni = emailLower.endsWith('@alumni.brown.edu');
+        const isAlumni = emailLower.endsWith('alumni.brown.edu') || emailLower.includes('alumni'); // Heuristic fallback for non-brown colleges
         let code;
         if (isAlumni) {
             // Alumni Codes: 900000 - 999999
@@ -99,7 +104,7 @@ export async function POST(req) {
 
         try {
             const { data, error: resendError } = await resend.emails.send({
-                from: 'Bruno Verifies <verify@brunov.juainny.com>',
+                from: settings.emailFromAddress,
                 to: email,
                 subject: 'Bruno\'s Secret Code for You',
                 html: `

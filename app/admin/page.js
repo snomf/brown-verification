@@ -8,7 +8,7 @@ import { Shield, Loader2, User, CheckCircle, XCircle, Trash2, RefreshCw, Externa
 import ThemeToggle from '../components/ThemeToggle';
 import BotStatus from '../components/BotStatus';
 
-const ADMIN_ID = '547599059024740374';
+// ADMIN_ID removal: Access is now controlled by server-side role checks.
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -16,29 +16,55 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [verifications, setVerifications] = useState([]);
   const [stats, setStats] = useState({ total: 0, student: 0, alumni: 0 });
+  const [roleMap, setRoleMap] = useState({});
   const [actionLoading, setActionLoading] = useState(null);
 
   const router = useRouter();
-
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/');
-        return;
-      }
+    const initializeDashboard = async () => {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/');
+          return;
+        }
+        setUser(user);
 
-      const discordId = user.user_metadata.provider_id;
-      if (discordId !== ADMIN_ID) {
-        router.push('/');
-        return;
-      }
+        // Fetch config for role mapping
+        const configRes = await fetch('/api/config');
+        const configData = await configRes.json();
+        if (configData.roleMap) {
+          setRoleMap(configData.roleMap);
+        }
 
-      setUser(user);
-      setIsAdmin(true);
-      fetchData();
+        // Try to fetch verifications - This also acts as our admin check
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/admin/verifications', {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`
+          }
+        });
+
+        if (res.status === 403 || res.status === 401) {
+          router.push('/');
+          return;
+        }
+
+        const data = await res.json();
+        if (res.ok) {
+          setVerifications(data.verifications);
+          setStats(data.stats);
+          setIsAdmin(true);
+        }
+      } catch (err) {
+        console.error('Admin Dashboard Init Error:', err);
+        router.push('/');
+      } finally {
+        setLoading(false);
+      }
     };
-    checkAdmin();
+    initializeDashboard();
   }, [router]);
 
   const fetchData = async () => {
@@ -177,14 +203,7 @@ export default function AdminDashboard() {
                       <div className="flex flex-wrap gap-1 max-w-[200px]">
                         {v.discordUser?.roles?.length > 0 ? v.discordUser.roles.map((rId) => (
                           <span key={rId} className="px-2 py-0.5 bg-stone-100 dark:bg-stone-700 text-[10px] font-bold rounded text-stone-500 dark:text-stone-400">
-                            {rId === '1449839054341410846' ? 'Alumni' :
-                             rId === '1449839196671053895' ? 'Student' :
-                             rId === '1460126744563548222' ? 'Bot' :
-                             rId === '1449839285887963279' ? '2029' :
-                             rId === '1449839544877846561' ? '2028' :
-                             rId === '1449839612317925436' ? '2027' :
-                             rId === '1449839686435471381' ? '2026' :
-                             rId.slice(-4)}
+                            {roleMap[rId] || rId.slice(-4)}
                           </span>
                         )) : (
                           <span className="text-xs italic text-stone-400">No roles</span>

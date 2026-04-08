@@ -2,21 +2,26 @@
 
 > The friendliest way to get verified on the Brown University Discord.
 
-**Bruno Verifies** is a student-run verification service for the Brown University Discord community. It ensures that members are actual Brown students by verifying their `@brown.edu` email addresses without storing them permanently.
+**Bruno Verifies** is a student-run verification service for the Brown University Discord community. It ensures that members are actual Brown students by verifying their `@brown.edu` email addresses safely and efficiently.
+
+### 🤖 Vibe-Coding Disclaimer
+*This project was made with the help of AI assistance to be simple, fast, and secure. It was built for transparency and ease-of-maintenance so anyone from anywhere could adopt it and pass it down without needing deep coding knowledge! See the Supabase settings configuration below to edit server parameters without diving into the code.*
 
 ## How It Works
 
 1.  **User Login**: Users sign in with Discord via OAuth2.
 2.  **Email Input**: Users provide their Brown University email.
 3.  **Hashing**: The email is locally hashed using SHA-256 for privacy. We only store the hash.
-4.  **Verification Code**: A 6-digit code is sent to the provided Brown email.
-5.  **Confirmation**: The user saves the code.
-6.  **Role Assignment**: Upon valid code entry, the bot assigns the verified role in Discord.
+4.  **Verification Mode**: Users can verify fast with a **Google Social Login** (@brown.edu requirement) or request a 6-digit email code.
+5.  **Confirmation**: The user saves the code or approves OAuth.
+6.  **Role Assignment**: The bot immediately assigns the verified class roles in Discord.
 
 ## Features
 
-*   **Privacy First**: Emails are hashed. We don't store plain-text emails after verification.
-*   **Cute UI**: Featuring Bruno the Bear! 🐻
+*   **Privacy First**: Emails are hashed. We don't store plain-text emails for manual codes.
+*   **Google OAuth**: Fast verification through `@brown.edu` Google accounts.
+*   **Nice UI**: Featuring Bruno the Bear! 🐻
+*   **Universal Configuration**: Modify Discord roles and channels straight from the Supabase database.
 *   **Dual Interface**: Verify via the website or the Discord bot commands (`/verify`).
 
 ## Tech Stack
@@ -39,10 +44,24 @@
     npm install
     ```
 
-3.  **Environment Variables**:
-    Create a `.env` file with the keys listed in `.env.example`.
+4.  **Database Configuration**:
+    - Create a new project on [Supabase](https://supabase.com).
+    - Go to the **SQL Editor** and run the contents of **`supabase/setup.sql`**. This creates all 4 required tables and sets up the universal configuration.
+    - Go to **Authentication > Providers** and enable **Discord** and **Google**.
 
-4.  **Run Development Server**:
+5.  **Environment Variables**:
+    - Copy **`.env.example`** to a new file named **`.env`**.
+    - Fill in all the missing values (Discord Bot Token, Supabase URL, etc).
+
+6.  **Universal Customization**:
+    Instead of editing code, open your **`server_settings`** table in Supabase to customize:
+    - `bot_status_text`: Change what Bruno (or your mascot) says.
+    - `admin_role_ids`: A comma-separated list of Role IDs for your admins.
+    - `allowed_mod_role_ids`: A comma-separated list of Role IDs for your mods.
+    - `role_2026-2030`: The graduation roles for your specific college.
+    - `email_from_address`: The sender name/email for verification codes.
+
+7.  **Run Development Server**:
     ```bash
     npm run dev
     ```

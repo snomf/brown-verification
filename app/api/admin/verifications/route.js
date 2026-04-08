@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
-
-const ADMIN_ID = '547599059024740374';
-const GUILD_ID = '1440891719737413665';
+import { getServerConfig } from '@/lib/config';
 
 export async function GET(req) {
     try {
+        const settings = await getServerConfig();
+        const guildId = settings.guildId || process.env.DISCORD_GUILD_ID;
+
         // 1. Verify Authentication
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) {
@@ -19,9 +20,26 @@ export async function GET(req) {
             return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
         }
 
-        // 2. Verify Authorization (Check if Admin)
-        const discordId = user.user_metadata.provider_id;
-        if (discordId !== ADMIN_ID) {
+        // 2. Verify Authorization (Role-based)
+        const adminDiscordId = user.user_metadata.provider_id;
+        if (!adminDiscordId) {
+             return NextResponse.json({ error: 'Account not linked to Discord.' }, { status: 403 });
+        }
+
+        const botToken = process.env.DISCORD_BOT_TOKEN;
+        const memberResp = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${adminDiscordId}`, {
+            headers: { Authorization: `Bot ${botToken}` }
+        });
+
+        if (!memberResp.ok) {
+            return NextResponse.json({ error: 'Could not verify your Discord membership.' }, { status: 403 });
+        }
+
+        const memberData = await memberResp.json();
+        const memberRoles = memberData.roles || [];
+        const isAdmin = settings.adminRoleIds.some(roleId => memberRoles.includes(roleId));
+
+        if (!isAdmin) {
             return NextResponse.json({ error: 'Unauthorized. Admins only!' }, { status: 403 });
         }
 
@@ -33,13 +51,11 @@ export async function GET(req) {
 
         if (vError) throw vError;
 
-        // 4. Fetch Discord info for each user (including roles)
+        // 4. Fetch Discord info for each user
         const verificationsWithDiscord = await Promise.all(verifications.map(async (v) => {
             try {
-                const discordRes = await fetch(`https://discord.com/api/v10/guilds/${GUILD_ID}/members/${v.discord_id}`, {
-                    headers: {
-                        Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`
-                    }
+                const discordRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${v.discord_id}`, {
+                    headers: { Authorization: `Bot ${botToken}` }
                 });
                 const discordData = await discordRes.json();
 
@@ -56,11 +72,8 @@ export async function GET(req) {
                         }
                     };
                 } else {
-                    // Fallback to basic user info if not in guild
                     const userRes = await fetch(`https://discord.com/api/v10/users/${v.discord_id}`, {
-                        headers: {
-                            Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`
-                        }
+                        headers: { Authorization: `Bot ${botToken}` }
                     });
                     const userData = await userRes.json();
                     if (userRes.ok) {

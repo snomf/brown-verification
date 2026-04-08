@@ -1,23 +1,17 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
+import { getServerConfig } from '@/lib/config';
 
 export async function POST(req) {
     try {
         const { code, userId, classYear, isAlumni } = await req.json();
         const botToken = process.env.DISCORD_BOT_TOKEN;
-        const guildId = process.env.DISCORD_GUILD_ID;
 
-        // Constants
-        const ROLES = {
-            ALUMNI: '1449839054341410846',
-            STUDENT: '1449839196671053895',
-            ACCEPTED: process.env.DISCORD_ROLE_ID,
-            CERTIFIED: '1485833884544274513',
-            '2029': '1449839285887963279',
-            '2028': '1449839544877846561',
-            '2027': '1449839612317925436',
-            '2026': '1449839686435471381'
-        };
+        const settings = await getServerConfig();
+        const guildId = settings.guildId || process.env.DISCORD_GUILD_ID;
+
+        // Constants loaded dynamically
+        const ROLES = settings.roles;
 
         // 1. Resolve Discord ID (Snowflake)
         const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
@@ -54,6 +48,8 @@ export async function POST(req) {
 
         if (isAlumni) {
             rolesToAssign.push(ROLES.ALUMNI);
+            rolesToAssign.push(ROLES.ACCEPTED);
+            rolesToAssign.push(ROLES.CERTIFIED);
         } else if (classYear === '2030') {
             rolesToAssign.push(ROLES.ACCEPTED);
             rolesToAssign.push(ROLES.CERTIFIED);

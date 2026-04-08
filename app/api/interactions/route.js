@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { hashEmail } from '@/lib/crypto';
 import { assignRole, logToChannel } from '@/lib/discord';
+import { getServerConfig } from '@/lib/config';
 import { Resend } from 'resend';
 
 // Initializing Resend
@@ -63,15 +64,23 @@ export async function POST(req) {
                     });
                 }
 
-                // Auto-append @brown.edu if no domain is provided
-                if (!email.includes('@')) {
-                    email = `${email}@brown.edu`;
+                const settings = await getServerConfig();
+                const allowedDomains = settings.allowedEmailDomains || ['@brown.edu', '@alumni.brown.edu'];
+                
+                // Auto-append domain if missing (uses first allowed domain)
+                if (!email.includes('@') && allowedDomains.length > 0) {
+                    email = `${email}${allowedDomains[0]}`;
                 }
 
-                if (!email.endsWith('@brown.edu')) {
+                const isAllowedDomain = allowedDomains.some(domain => email.endsWith(domain));
+
+                if (!isAllowedDomain) {
                     return NextResponse.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: '<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** email! Are you sure you\'re in the right place?', flags: 64 },
+                        data: { 
+                            content: '<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** email! Are you sure you\'re in the right place?', 
+                            flags: 64 
+                        },
                     });
                 }
 
@@ -113,7 +122,7 @@ export async function POST(req) {
 
                 try {
                     const { data, error: resendError } = await resend.emails.send({
-                        from: 'Bruno Verifies <verify@brunov.juainny.com>',
+                        from: settings.emailFromAddress,
                         to: email,
                         subject: 'Your Bruno Verification Code',
                         html: `
@@ -184,7 +193,9 @@ export async function POST(req) {
 
                 // Assign Role & Log
                 try {
-                    await assignRole(discordUserId);
+                    const settings = await getServerConfig();
+                    const rolesToAssign = [settings.roles.ACCEPTED, settings.roles.CERTIFIED].filter(id => !!id);
+                    await assignRole(discordUserId, rolesToAssign);
 
                     await supabase.from('verifications').insert({
                         discord_id: discordUserId,
@@ -211,8 +222,9 @@ export async function POST(req) {
 
             // --- CASE: /adminv [user] ---
             if (name === 'adminv') {
+                const settings = await getServerConfig();
                 const memberRoles = interaction.member?.roles || [];
-                const allowedRoles = ['1449820726407467190', '1442356190209380373'];
+                const allowedRoles = settings.allowedModRoleIds;
                 const hasPermission = memberRoles.some(role => allowedRoles.includes(role));
 
                 if (!hasPermission) {
@@ -246,7 +258,19 @@ export async function POST(req) {
 
                         if (dbError) throw dbError;
 
-                        await assignRole(targetUserId);
+                        // Identify roles to assign based on verification type
+                        const ROLES = settings.roles;
+                        const rolesToAssign = [];
+                        
+                        if (verifyType === 'alumni') {
+                            rolesToAssign.push(ROLES.ALUMNI, ROLES.ACCEPTED, ROLES.CERTIFIED);
+                        } else if (ROLES[verifyType]) {
+                            rolesToAssign.push(ROLES.ACCEPTED, ROLES.CERTIFIED, ROLES.STUDENT, ROLES[verifyType]);
+                        } else {
+                            rolesToAssign.push(ROLES.ACCEPTED, ROLES.CERTIFIED);
+                        }
+
+                        await assignRole(targetUserId, rolesToAssign.filter(id => !!id));
                         logToChannel(targetUserId, 'admin').catch(console.error);
 
                         // Update the deferred message

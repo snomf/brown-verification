@@ -11,7 +11,7 @@ const VERSION = '1.0.1';
 /**
  * BRUNO VERIFIES - PERSISTENT BOT (RESTORED)
  * Version: 1.0.1
- * This script runs 24/7 on DisCloud to keep Bruno "Online"
+ * This script handles Discord commands for verify and /confirm.
  */
 
 console.log(`[Bruno Bot] Version ${VERSION} Starting...`);
@@ -29,7 +29,7 @@ const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPAB
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.error('CRITICAL ERROR: Supabase configuration is missing or empty!');
-    console.error('Check your DisCloud Environment Variables or .env file.');
+    console.error('Check your .env file or environment variables.');
     process.exit(1);
 }
 
@@ -50,13 +50,78 @@ function hashEmail(email) {
     return crypto.createHash('sha256').update(cleanEmail).digest('hex');
 }
 
-client.once('ready', () => {
+async function getServerSettings() {
+    try {
+        const { data, error } = await supabase.from('server_settings').select('*').eq('id', 1).single();
+        if (error) throw error;
+        return {
+            adminRoleIds: data.admin_role_ids ? data.admin_role_ids.split(',').map(id => id.trim()) : (process.env.DISCORD_ADMIN_ROLE_ID ? [process.env.DISCORD_ADMIN_ROLE_ID] : []),
+            modChannelId: data.mod_review_channel_id || process.env.MOD_REVIEW_CHANNEL_ID,
+            allowedModRoleIds: data.allowed_mod_role_ids ? data.allowed_mod_role_ids.split(',').map(id => id.trim()) : (process.env.ALLOWED_MOD_ROLE_IDS ? process.env.ALLOWED_MOD_ROLE_IDS.split(',').map(id => id.trim()) : []),
+            emailFromAddress: data.email_from_address || process.env.EMAIL_FROM_ADDRESS || 'Bruno Verifies <verify@brunov.juainny.com>',
+            statusText: data.bot_status_text || "ROARRRRRRRRR! 🐻 I'm verifying Students!",
+            statusPresence: data.bot_status_presence || 'online',
+            guildId: data.guild_id || process.env.DISCORD_GUILD_ID,
+            botId: data.bot_id || process.env.DISCORD_CLIENT_ID,
+            roles: {
+                ACCEPTED: data.role_accepted || process.env.DISCORD_ROLE_ID,
+                CERTIFIED: data.role_certified || process.env.DISCORD_CERTIFIED_ROLE_ID,
+                ALUMNI: data.role_alumni || process.env.DISCORD_ALUMNI_ROLE_ID,
+                STUDENT: data.role_student || process.env.DISCORD_STUDENT_ROLE_ID,
+                '2026': data.role_2026 || process.env.DISCORD_ROLE_2026,
+                '2027': data.role_2027 || process.env.DISCORD_ROLE_2027,
+                '2028': data.role_2028 || process.env.DISCORD_ROLE_2028,
+                '2029': data.role_2029 || process.env.DISCORD_ROLE_2029,
+                '2030': data.role_2030 || process.env.DISCORD_ROLE_2030
+            }
+        };
+    } catch (e) {
+        return {
+            adminRoleIds: process.env.DISCORD_ADMIN_ROLE_ID ? [process.env.DISCORD_ADMIN_ROLE_ID] : [],
+            modChannelId: process.env.MOD_REVIEW_CHANNEL_ID,
+            allowedModRoleIds: process.env.ALLOWED_MOD_ROLE_IDS ? process.env.ALLOWED_MOD_ROLE_IDS.split(',').map(id => id.trim()) : [],
+            emailFromAddress: process.env.EMAIL_FROM_ADDRESS || 'Bruno Verifies <verify@brunov.juainny.com>',
+            statusText: "ROARRRRRRRRR! 🐻 I'm verifying Students!",
+            statusPresence: 'online',
+            guildId: process.env.DISCORD_GUILD_ID,
+            botId: process.env.DISCORD_CLIENT_ID,
+            roles: {
+                ACCEPTED: process.env.DISCORD_ROLE_ID,
+                CERTIFIED: process.env.DISCORD_CERTIFIED_ROLE_ID,
+                ALUMNI: process.env.DISCORD_ALUMNI_ROLE_ID,
+                STUDENT: process.env.DISCORD_STUDENT_ROLE_ID,
+                '2026': process.env.DISCORD_ROLE_2026,
+                '2027': process.env.DISCORD_ROLE_2027,
+                '2028': process.env.DISCORD_ROLE_2028,
+                '2029': process.env.DISCORD_ROLE_2029,
+            }
+        };
+    }
+}
+
+async function isUserAdmin(user, settings) {
+    if (!settings.adminRoleIds || settings.adminRoleIds.length === 0) return false;
+    
+    try {
+        const guild = await client.guilds.fetch(settings.guildId);
+        const member = await guild.members.fetch(user.id).catch(() => null);
+        if (!member) return false;
+        
+        return settings.adminRoleIds.some(roleId => member.roles.cache.has(roleId));
+    } catch (err) {
+        console.error('[Bruno Error] Failed to check admin status:', err);
+        return false;
+    }
+}
+
+client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
     console.log('Bruno is ONLINE. Sniffing for logs...');
 
+    const settings = await getServerSettings();
     client.user.setPresence({
-        activities: [{ name: 'Custom Status', state: "ROARRRRRRRRR! 🐻 I'm verifying Brown Students! Link in bio", type: 4 }],
-        status: 'online',
+        activities: [{ name: 'Custom Status', state: settings.statusText, type: 4 }],
+        status: settings.statusPresence,
     });
 });
 
@@ -103,7 +168,8 @@ async function logToChannel(discordUserId, method = 'command') {
 
 client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) {
-        const allowedRoles = ['1449820726407467190', '1442356190209380373'];
+        const settings = await getServerSettings();
+        const allowedRoles = settings.allowedModRoleIds;
         const memberRoles = Array.isArray(interaction.member?.roles)
             ? interaction.member?.roles
             : (interaction.member?.roles?.cache ? interaction.member?.roles.cache.map(r => r.id) : []);
@@ -261,9 +327,9 @@ client.on('interactionCreate', async interaction => {
             }
 
             // Send Styled Email
-            console.log(`[Bruno Log] Sending email for User ${discordUserId}...`);
+            const settings = await getServerSettings();
             const resendResponse = await resend.emails.send({
-                from: 'Bruno Verifies <verify@brunov.juainny.com>',
+                from: settings.emailFromAddress,
                 to: email,
                 subject: 'Bruno\'s Secret Code for You',
                 html: `
@@ -302,17 +368,9 @@ client.on('interactionCreate', async interaction => {
         const code = options.getString('code');
         const classYear = options.getString('class_year'); // Optional
 
-        // Role Constants
-        const ROLES = {
-            ALUMNI: '1449839054341410846',
-            STUDENT: '1449839196671053895',
-            ACCEPTED: process.env.DISCORD_ROLE_ID,
-            CERTIFIED: process.env.DISCORD_CERTIFIED_ROLE_ID,
-            '2029': '1449839285887963279',
-            '2028': '1449839544877846561',
-            '2027': '1449839612317925436',
-            '2026': '1449839686435471381'
-        };
+        // Load ROLES dynamically
+        const settings = await getServerSettings();
+        const ROLES = settings.roles;
 
         try {
             const { data: pending, error: fetchError } = await supabase
@@ -334,7 +392,9 @@ client.on('interactionCreate', async interaction => {
 
             if (isAlumniCode) {
                 rolesToAssign.push(ROLES.ALUMNI);
-                successMsg = "Welcome back, Alumni! You've been verified.";
+                rolesToAssign.push(ROLES.ACCEPTED);
+                rolesToAssign.push(ROLES.CERTIFIED);
+                successMsg = "Welcome back, Alumni! You've been verified and certified (ROARRRRRRRRR! 🐻).";
             } else {
                 // Always add the base and certified role for email verification
                 rolesToAssign.push(ROLES.ACCEPTED);
@@ -354,7 +414,10 @@ client.on('interactionCreate', async interaction => {
             }
 
             // Assign Roles
-            const guild = await client.guilds.fetch(guildId);
+            const targetGuildId = guildId || settings.guildId;
+            if (!targetGuildId) throw new Error("No guild ID available to process verification.");
+            
+            const guild = await client.guilds.fetch(targetGuildId);
             const member = await guild.members.fetch(discordUserId);
 
             // Helper to add roles safely
@@ -390,7 +453,7 @@ client.on('interactionCreate', async interaction => {
 
             if (insertError) {
                 console.error('[Bruno Error] Failed to log verification to DB:', insertError);
-                return interaction.editReply('<:BearShock:1460381158134120529> I gave you the role, but my database brain is full! I couldn\'t save your record. Please let <@547599059024740374> know!');
+                return interaction.editReply('<:BearShock:1460381158134120529> I gave you the role, but my database brain is full! I couldn\'t save your record. Please let an admin know!');
             }
 
             console.log(`[Bruno Log] Saved verification for ${discordUserId} to Supabase.`);
@@ -404,7 +467,7 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply(`<:Verified:1460379061816787139> ${successMsg}`);
         } catch (err) {
             console.error('[Bruno Error] /confirm handler exception:', err);
-            await interaction.editReply('Error assigning role. Yell at <@547599059024740374>!');
+            await interaction.editReply('Error assigning role. Please contact an admin!');
         }
     }
 
@@ -413,7 +476,8 @@ client.on('interactionCreate', async interaction => {
             // Immediate Defer to prevent timeout
             await interaction.deferReply({ ephemeral: false });
 
-            const allowedRoles = ['1449820726407467190', '1442356190209380373'];
+            const settings = await getServerSettings();
+            const allowedRoles = settings.adminRoleIds || [];
             const rolesObj = interaction.member?.roles;
             // Handle both GuildMember (manager) and API (array)
             const memberRoles = Array.isArray(rolesObj)
@@ -436,23 +500,17 @@ client.on('interactionCreate', async interaction => {
             const targetUserId = targetUser.id;
             console.log(`[Bruno Log] Admin verify initiated for ${targetUserId} by ${interaction.user.tag} with type ${verifyType}`);
 
-            const ROLES = {
-                ALUMNI: '1449839054341410846',
-                STUDENT: '1449839196671053895',
-                ACCEPTED: process.env.DISCORD_ROLE_ID,
-                CERTIFIED: process.env.DISCORD_CERTIFIED_ROLE_ID,
-                '2029': '1449839285887963279',
-                '2028': '1449839544877846561',
-                '2027': '1449839612317925436',
-                '2026': '1449839686435471381'
-            };
+            // Load ROLES dynamically
+            const ROLES = settings.roles;
 
             const rolesToAssign = [];
             let successDetail = '';
 
             if (verifyType === 'alumni') {
                 rolesToAssign.push(ROLES.ALUMNI);
-                successDetail = 'as **Alumni**';
+                rolesToAssign.push(ROLES.ACCEPTED);
+                rolesToAssign.push(ROLES.CERTIFIED);
+                successDetail = 'as **Alumni** (Accepted & Certified)';
             } else if (ROLES[verifyType]) {
                 rolesToAssign.push(ROLES.ACCEPTED);
                 rolesToAssign.push(ROLES.CERTIFIED);
@@ -480,7 +538,10 @@ client.on('interactionCreate', async interaction => {
             }
 
             // Assign Roles
-            const guild = await client.guilds.fetch(guildId);
+            const targetGuildId = guildId || settings.guildId;
+            if (!targetGuildId) throw new Error("No guild ID available to process verification.");
+            
+            const guild = await client.guilds.fetch(targetGuildId);
             const memberToVerify = await guild.members.fetch(targetUserId);
 
             for (const rId of rolesToAssign) {
@@ -511,11 +572,11 @@ client.on('interactionCreate', async interaction => {
 
     if (commandName === 'ivy-verify') {
         await interaction.deferReply({ ephemeral: true });
-
+        const settings = await getServerSettings();
         const attachment = options.getAttachment('attachment');
         const note = options.getString('note') || '';
 
-        const allowedRoles = ['1449820726407467190', '1442356190209380373'];
+        const allowedRoles = settings.allowedModRoleIds;
         const memberRoles = Array.isArray(interaction.member?.roles)
             ? interaction.member?.roles
             : (interaction.member?.roles?.cache ? interaction.member?.roles.cache.map(r => r.id) : []);
@@ -574,9 +635,12 @@ client.on('interactionCreate', async interaction => {
 
         if (isApproved) {
             // Auto approve
-            const guild = await client.guilds.fetch(guildId);
-            const member = await guild.members.fetch(discordUserId);
-            await member.roles.add(process.env.DISCORD_ROLE_ID).catch(console.error);
+            const targetGuildId = guildId || settings.guildId;
+            if (targetGuildId) {
+                const guild = await client.guilds.fetch(targetGuildId);
+                const member = await guild.members.fetch(discordUserId);
+                await member.roles.add(settings.roles.ACCEPTED).catch(console.error);
+            }
 
             // Save to DB
             await supabase.from('temp_verifications').upsert({
@@ -597,7 +661,7 @@ client.on('interactionCreate', async interaction => {
                 new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
             );
 
-            const modChannelId = process.env.MOD_REVIEW_CHANNEL_ID;
+            const modChannelId = settings.modChannelId;
             const modChannel = modChannelId ? await client.channels.fetch(modChannelId).catch(() => null) : null;
             if (modChannel) await modChannel.send({ embeds: [embed], components: [row] });
 
@@ -616,7 +680,7 @@ client.on('interactionCreate', async interaction => {
                 new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
             );
 
-            const modChannelId = process.env.MOD_REVIEW_CHANNEL_ID;
+            const modChannelId = settings.modChannelId;
             const modChannel = modChannelId ? await client.channels.fetch(modChannelId).catch(() => null) : null;
             let modMessageId = null;
             if (modChannel) {
@@ -637,24 +701,35 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (commandName === 'manage') {
-        const TARGET_USER_ID = '547599059024740374';
-        const TARGET_CHANNEL_ID = '1449864433344975071';
+        const settings = await getServerSettings();
+        const isAdmin = await isUserAdmin(interaction.user, settings);
 
-        if (interaction.user.id !== TARGET_USER_ID || interaction.channelId !== TARGET_CHANNEL_ID) {
-            return interaction.reply({ content: '<:BearShock:1460381158134120529> ROAR! You are not authorized to use this command here.', ephemeral: true });
+        if (!isAdmin) {
+            return interaction.reply({ content: '<:BearShock:1460381158134120529> ROAR! You are not authorized to use this command. Only Admins can manage my brain!', ephemeral: true });
         }
 
-        const subcommand = options.getSubcommand();
+        const action = options.getString('action');
 
-        if (subcommand === 'status') {
+        if (action === 'status') {
             const text = options.getString('text');
             const presence = options.getString('presence');
+
+            if (!text || !presence) {
+                return interaction.reply({ content: 'You must provide both text and presence for Status Update!', ephemeral: true });
+            }
 
             try {
                 await client.user.setPresence({
                     activities: [{ name: 'Custom Status', state: text, type: 4 }],
                     status: presence,
                 });
+                
+                await supabase.from('server_settings').update({
+                    bot_status_presence: presence,
+                    bot_status_text: text,
+                    updated_at: new Date().toISOString()
+                }).eq('id', 1);
+
                 return interaction.reply({ content: `✅ Status updated to: **${presence}** | **${text}**`, ephemeral: true });
             } catch (err) {
                 console.error('[Bruno Error] Failed to update status:', err);
@@ -662,7 +737,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        if (subcommand === 'remind') {
+        if (action === 'remind') {
             const targetUser = options.getUser('user');
             if (!targetUser) return interaction.reply({ content: 'Please specify a user.', ephemeral: true });
 
@@ -676,13 +751,15 @@ client.on('interactionCreate', async interaction => {
                         { name: '📄 No Brown Email? (not recommended)', value: 'Use `/ivy-verify` and upload a screenshot of your acceptance letter! ', inline: false }
                     )
                     .setColor(0x591C0B)
-                    .setThumbnail('https://brunov.juainny.com/bruno-bear.png'); // Assuming this exists or using a placeholder
+                    .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
 
                 await targetUser.send({ embeds: [remindEmbed] }).catch(async () => {
                     return interaction.reply({ content: `❌ Could not send DM to <@${targetUser.id}>. Their DMs might be closed.`, ephemeral: true });
                 });
 
-                return interaction.reply({ content: `✅ Sent a verification reminder to <@${targetUser.id}>!`, ephemeral: true });
+                if (!interaction.replied) {
+                    return interaction.reply({ content: `✅ Sent a verification reminder to <@${targetUser.id}>!`, ephemeral: true });
+                }
             } catch (err) {
                 console.error('[Bruno Error] Failed to send reminder:', err);
                 return interaction.reply({ content: '❌ Failed to send reminder.', ephemeral: true });

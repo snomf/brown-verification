@@ -15,6 +15,7 @@ export default function Verify() {
     const [username, setUsername] = useState('');
     const [fullEmail, setFullEmail] = useState('');
     const [isAlumni, setIsAlumni] = useState(false);
+    const [allowedDomains, setAllowedDomains] = useState(['@brown.edu', '@alumni.brown.edu']);
     const [selectedDomain, setSelectedDomain] = useState('@brown.edu');
     const [classYear, setClassYear] = useState('2030');
     const [showClassOptions, setShowClassOptions] = useState(false);
@@ -40,6 +41,22 @@ export default function Verify() {
     }, [resendTimer]);
 
     useEffect(() => {
+        const fetchConfig = async () => {
+            try {
+                const res = await fetch('/api/config');
+                const data = await res.json();
+                if (data.allowedEmailDomains) {
+                    setAllowedDomains(data.allowedEmailDomains);
+                    setSelectedDomain(data.allowedEmailDomains[0]);
+                }
+            } catch (err) {
+                console.error("Failed to fetch public config:", err);
+            }
+        };
+        fetchConfig();
+    }, []);
+
+    useEffect(() => {
         const checkUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
@@ -51,6 +68,60 @@ export default function Verify() {
         checkUser();
     }, [router]);
 
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('google_auth') === 'true') {
+            const handleGoogleAuthReturn = async () => {
+                setLoading(true);
+                setTimeout(async () => {
+                    try {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (user && user.identities?.some(i => i.provider === 'google')) {
+                            const res = await fetch('/api/verify/google', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: user.id, classYear: urlParams.get('year') || '2030' })
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.message);
+                            setStep('success');
+                            setCustomBearMessage(data.message);
+                        } else {
+                            throw new Error("No Google identity found.");
+                        }
+                    } catch (err) {
+                        setError(err.message);
+                        setCustomBearMessage(err.message);
+                    } finally {
+                        setLoading(false);
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                }, 1000);
+            };
+            handleGoogleAuthReturn();
+        }
+    }, []);
+
+    const initGoogleAuth = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const finalClassYear = showClassOptions ? classYear : '2030';
+            await supabase.auth.linkIdentity({
+                provider: 'google',
+                options: {
+                    queryParams: {
+                        prompt: 'select_account'
+                    },
+                    redirectTo: `${window.location.origin}/verify?google_auth=true&year=${finalClassYear}`
+                }
+            });
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
     const handleRequestCode = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -60,11 +131,9 @@ export default function Verify() {
         let finalEmail = `${username.trim()}${selectedDomain}`;
         setFullEmail(finalEmail);
 
-        if (selectedDomain === '@alumni.brown.edu') {
-            setIsAlumni(true);
-        } else {
-            setIsAlumni(false);
-        }
+        // Heuristic: if domain contains 'alumni', it's an alumni account
+        const isAlumniDomain = selectedDomain.toLowerCase().includes('alumni');
+        setIsAlumni(isAlumniDomain);
 
         try {
             const res = await fetch('/api/verify/request', {
@@ -208,42 +277,65 @@ export default function Verify() {
                                                 className="bg-[#591C0B]/5 dark:bg-white/5 border-l-2 border-[#591C0B]/10 dark:border-white/10 px-4 py-4 text-sm font-bold text-[#591C0B] dark:text-amber-200 outline-none cursor-pointer hover:bg-[#591C0B]/10 dark:hover:bg-white/10 transition-colors appearance-none pr-8"
                                                 style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23591C0B\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
                                             >
-                                                <option value="@brown.edu">@brown.edu</option>
-                                                <option value="@alumni.brown.edu">@alumni.brown.edu</option>
+                                                {allowedDomains.map(domain => (
+                                                    <option key={domain} value={domain}>{domain}</option>
+                                                ))}
                                             </select>
                                         </div>
                                         <p className="mt-1.5 text-xs text-[#8C6B5D] font-medium opacity-60">No need to type the @ domain!</p>
                                     </div>
+                                    <div className="flex items-center gap-4 my-2">
+                                        <hr className="flex-1 border-[#591C0B]/10 dark:border-white/10" />
+                                        <span className="text-xs font-bold text-[#8C6B5D] uppercase">Choose a method</span>
+                                        <hr className="flex-1 border-[#591C0B]/10 dark:border-white/10" />
+                                    </div>
+
                                     <button
-                                        disabled={loading || !username.trim()}
-                                        className="w-full py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black flex items-center justify-center gap-2"
+                                        type="button"
+                                        onClick={initGoogleAuth}
+                                        disabled={loading}
+                                        className="w-full py-4 bg-white dark:bg-stone-800 text-[#591C0B] dark:text-stone-200 font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black flex items-center justify-center gap-3"
                                     >
-                                        {loading ? <img src="/verified-bear.png" className="w-6 h-6 animate-spin-random" alt="Loading..." /> : <><Send className="w-5 h-5" /> Send Verification Code</>}
+                                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+                                        Sign in with Google
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading || !username.trim()}
+                                        className="w-full py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 border-2 border-black flex items-center justify-center gap-2 mt-1"
+                                    >
+                                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> Send Verification Code</>}
                                     </button>
 
                                     {/** Optional Advanced Settings for Current Students */}
                                     {selectedDomain === '@brown.edu' && (
-                                        <div className="pt-2">
+                                        <div className="pt-4 mt-2 border-t-2 border-[#591C0B]/5 border-dashed">
                                             <button
                                                 type="button"
                                                 onClick={() => setShowClassOptions(!showClassOptions)}
-                                                className="text-xs font-bold text-[#8C6B5D] hover:text-[#591C0B] flex items-center gap-1 mb-2 transition-colors"
+                                                className="w-full relative px-6 py-3 bg-[#591C0B]/5 hover:bg-[#591C0B]/10 dark:bg-white/5 dark:hover:bg-white/10 rounded-xl text-sm font-black text-[#591C0B] dark:text-amber-500 border-2 border-transparent hover:border-[#591C0B]/20 transition-all flex items-center justify-between group"
                                             >
-                                                {showClassOptions ? '[-]' : '[+]'} I want to add my Class Year (Optional)
+                                                <span className="flex items-center gap-2">
+                                                    🎓 Add your Class Year? (Optional)
+                                                </span>
+                                                <span className="bg-white dark:bg-stone-800 p-1 rounded-md shadow-sm border border-black/5 group-hover:scale-110 transition-transform">
+                                                    {showClassOptions ? '-' : '+'}
+                                                </span>
                                             </button>
 
                                             {showClassOptions && (
-                                                <div className="bg-white/50 p-4 rounded-xl border-2 border-[#591C0B]/5 animate-in slide-in-from-top-2">
-                                                    <p className="text-xs text-[#8C6B5D] mb-2 font-bold">Select your Class Year:</p>
+                                                <div className="bg-white/50 dark:bg-black/20 p-4 rounded-xl border-2 border-[#591C0B]/5 mt-3 animate-in slide-in-from-top-2">
+                                                    <p className="text-xs text-[#8C6B5D] mb-3 font-bold uppercase tracking-wider">Select your Class Year:</p>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         {['2030', '2029', '2028', '2027', '2026'].map((year) => (
                                                             <button
                                                                 key={year}
                                                                 type="button"
                                                                 onClick={() => setClassYear(year === classYear ? '' : year)}
-                                                                className={`p-2 rounded-lg text-sm font-bold border-2 transition-all ${classYear === year
-                                                                    ? 'bg-[#591C0B] text-white border-[#591C0B]'
-                                                                    : 'bg-white text-gray-500 border-transparent hover:border-[#591C0B]/10'
+                                                                className={`p-3 rounded-xl text-sm font-bold border-2 transition-all ${classYear === year
+                                                                    ? 'bg-[#591C0B] text-white border-[#591C0B] shadow-sm transform scale-95'
+                                                                    : 'bg-white text-gray-500 border-transparent hover:border-[#591C0B]/20 hover:scale-[1.02]'
                                                                     }`}
                                                             >
                                                                 {year === '2030' ? "Class of '30 (Default)" : `Class of '${year.slice(2)}`}

@@ -92,42 +92,38 @@ const commands = [
         description: 'Management commands (Bot status, reminders, etc.)',
         options: [
             {
-                name: 'status',
-                description: 'Change the bot status and presence',
-                type: ApplicationCommandOptionType.Subcommand,
-                options: [
-                    {
-                        name: 'text',
-                        description: 'The status text to set',
-                        type: ApplicationCommandOptionType.String,
-                        required: true,
-                    },
-                    {
-                        name: 'presence',
-                        description: 'The online status (online, dnd, idle)',
-                        type: ApplicationCommandOptionType.String,
-                        required: true,
-                        choices: [
-                            { name: 'Online', value: 'online' },
-                            { name: 'DND', value: 'dnd' },
-                            { name: 'Idle', value: 'idle' },
-                        ],
-                    },
-                ],
+                name: 'action',
+                description: 'What do you want to do?',
+                type: ApplicationCommandOptionType.String,
+                required: true,
+                choices: [
+                    { name: 'Update Status', value: 'status' },
+                    { name: 'Send Reminder', value: 'remind' },
+                ]
             },
             {
-                name: 'remind',
-                description: 'Send a verification reminder to a specific user',
-                type: ApplicationCommandOptionType.Subcommand,
-                options: [
-                    {
-                        name: 'user',
-                        description: 'The user to remind',
-                        type: ApplicationCommandOptionType.User,
-                        required: true,
-                    },
-                ],
+                name: 'text',
+                description: 'Status text (Only for Update Status)',
+                type: ApplicationCommandOptionType.String,
+                required: false,
             },
+            {
+                name: 'presence',
+                description: 'Presence (Only for Update Status)',
+                type: ApplicationCommandOptionType.String,
+                required: false,
+                choices: [
+                    { name: 'Online', value: 'online' },
+                    { name: 'DND', value: 'dnd' },
+                    { name: 'Idle', value: 'idle' },
+                ]
+            },
+            {
+                name: 'user',
+                description: 'Target user (Only for Send Reminder)',
+                type: ApplicationCommandOptionType.User,
+                required: false,
+            }
         ],
     },
 ];

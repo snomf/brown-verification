@@ -12,6 +12,7 @@ import BotStatus from './components/BotStatus';
 
 export default function Home() {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [greetingMsg, setGreetingMsg] = useState('');
@@ -39,6 +40,23 @@ export default function Home() {
   useEffect(() => {
     if (user) {
       setLoggedInMsg(getRandomMessage('loggedIn', { name: user.user_metadata.full_name }));
+      
+      // Check if Admin
+      const checkAdminStatus = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const res = await fetch('/api/admin/check', {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          });
+          const data = await res.json();
+          setIsAdmin(data.isAdmin);
+        } catch (err) {
+          setIsAdmin(false);
+        }
+      };
+      checkAdminStatus();
+    } else {
+      setIsAdmin(false);
     }
   }, [user]);
 
@@ -164,7 +182,7 @@ export default function Home() {
                     {loggedInMsg}
                   </h2>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    {user?.user_metadata?.provider_id === '547599059024740374' && (
+                    {isAdmin && (
                       <Link
                         href="/admin"
                         className="flex-1 py-4 bg-stone-800 dark:bg-amber-600 text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black text-center text-lg"
