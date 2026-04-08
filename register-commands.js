@@ -99,25 +99,8 @@ const commands = [
                 type: ApplicationCommandOptionType.String,
                 required: true,
                 choices: [
-                    { name: 'Update Status', value: 'status' },
+                    { name: 'Update Status (Pop-up Form)', value: 'status' },
                     { name: 'Send Reminder', value: 'remind' },
-                ]
-            },
-            {
-                name: 'text',
-                description: 'Status text (Only for Update Status)',
-                type: ApplicationCommandOptionType.String,
-                required: false,
-            },
-            {
-                name: 'presence',
-                description: 'Presence type (Only for Update Status)',
-                type: ApplicationCommandOptionType.String,
-                required: false,
-                choices: [
-                    { name: 'Online', value: 'online' },
-                    { name: 'DND', value: 'dnd' },
-                    { name: 'Idle', value: 'idle' },
                 ]
             },
             {

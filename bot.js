@@ -1,17 +1,17 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const { supabaseAdmin: supabase } = require('./lib/supabase');
 const { getServerConfig } = require('./lib/config');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 
-const VERSION = '1.0.3';
+const VERSION = '1.0.6';
 
 /**
  * BRUNO VERIFIES - PERSISTENT BOT (RESTORED)
- * Version: 1.0.3
+ * Version: 1.0.6
  * This script handles Discord commands for verify and /confirm.
  */
 
@@ -203,7 +203,7 @@ client.on('interactionCreate', async interaction => {
 
         } else if (action === 'manual') {
             if (targetMember) {
-                await targetMember.send("✉️ Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help! ROARRR").catch(() => { });
+                await targetMember.send("✉️ Our moderators couldn't fully verify your submission. A moderator will reach out to you shortly via DM to help! ROARRRR").catch(() => { });
             }
             await supabase.from('temp_verifications').update({ status: 'needs_manual_dm' }).eq('discord_id', targetId);
             statusText = `⚠️ NEEDS MANUAL DM (Claimed by ${interaction.user.tag})`;
@@ -236,6 +236,34 @@ client.on('interactionCreate', async interaction => {
         await interaction.message.edit({ embeds: [embed], components: [newRow] });
         return;
     }
+
+    if (interaction.isModalSubmit()) {
+        if (interaction.customId === 'status_modal') {
+            const text = interaction.fields.getTextInputValue('status_text');
+            const presence = interaction.fields.getTextInputValue('status_presence').toLowerCase() || 'online';
+
+            try {
+                // Update presence immediately
+                await client.user.setPresence({
+                    activities: [{ name: 'Custom Status', state: text, type: 4 }],
+                    status: presence,
+                });
+                
+                // Persist to Supabase
+                await supabase.from('server_settings').update({
+                    bot_status_presence: presence,
+                    bot_status_text: text,
+                    updated_at: new Date().toISOString()
+                }).eq('id', 1);
+
+                return interaction.reply({ content: `✅ Status updated to: **${presence}** | **${text}**`, ephemeral: true });
+            } catch (err) {
+                console.error('[Bruno Error] Failed to update status from modal:', err);
+                return interaction.reply({ content: '❌ Failed to update status.', ephemeral: true });
+            }
+        }
+    }
+
 
     if (!interaction.isChatInputCommand()) return;
 
@@ -696,32 +724,36 @@ client.on('interactionCreate', async interaction => {
         const action = options.getString('action');
 
         if (action === 'status') {
-            const text = options.getString('text');
-            const presence = options.getString('presence');
+            // Create the Modal
+            const modal = new ModalBuilder()
+                .setCustomId('status_modal')
+                .setTitle('Update Bot Status 🐻');
 
-            if (!text || !presence) {
-                return interaction.reply({ content: 'You must provide both text and presence for Status Update!', ephemeral: true });
-            }
+            // Add Text Inputs
+            const textInput = new TextInputBuilder()
+                .setCustomId('status_text')
+                .setLabel('What should Bruno say?')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Enter status text...')
+                .setValue(settings.botStatusText || '')
+                .setRequired(true);
 
-            try {
-                // Update presence immediately
-                await client.user.setPresence({
-                    activities: [{ name: 'Custom Status', state: text, type: 4 }],
-                    status: presence,
-                });
-                
-                // Persist to Supabase
-                await supabase.from('server_settings').update({
-                    bot_status_presence: presence,
-                    bot_status_text: text,
-                    updated_at: new Date().toISOString()
-                }).eq('id', 1);
+            const presenceInput = new TextInputBuilder()
+                .setCustomId('status_presence')
+                .setLabel('Presence (online, dnd, idle)')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('online')
+                .setValue(settings.botStatusPresence || 'online')
+                .setRequired(true);
 
-                return interaction.reply({ content: `✅ Status updated to: **${presence}** | **${text}**`, ephemeral: true });
-            } catch (err) {
-                console.error('[Bruno Error] Failed to update status:', err);
-                return interaction.reply({ content: '❌ Failed to update status.', ephemeral: true });
-            }
+            // Add rows
+            const firstRow = new ActionRowBuilder().addComponents(textInput);
+            const secondRow = new ActionRowBuilder().addComponents(presenceInput);
+
+            modal.addComponents(firstRow, secondRow);
+
+            // Show the modal
+            await interaction.showModal(modal);
         }
 
         if (action === 'remind') {
