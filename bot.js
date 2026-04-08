@@ -351,7 +351,10 @@ client.on('interactionCreate', async interaction => {
                 // Include token in Google button even in email flow as a fallback
                 const token = crypto.randomUUID();
                 const tokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-                await supabase.from('verify_tokens').insert({ token, discord_id: interaction.user.id, expires_at: tokenExpiresAt.toISOString() });
+                try {
+                    await supabase.from('verify_tokens').insert({ token, discord_id: interaction.user.id, expires_at: tokenExpiresAt.toISOString() });
+                } catch (tokErr) { console.error('Token fallback failed', tokErr); }
+                
                 const googleTokenButton = new ButtonBuilder()
                     .setLabel('Sign in with Google')
                     .setURL(`https://brunov.juainny.com/verify?token=${token}`)
@@ -375,144 +378,36 @@ client.on('interactionCreate', async interaction => {
     const discordUserId = user.id;
 
     if (commandName === 'verify') {
-        let email = options.getString('email')?.trim().toLowerCase();
-
         // One-time token generation for Google Login bypass
         const token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
         
         try {
-            await supabase.from('verify_tokens').insert({
-                token,
-                discord_id: discordUserId,
-                expires_at: expiresAt.toISOString()
-            });
+            await supabase.from('verify_tokens').insert({ token, discord_id: discordUserId, expires_at: expiresAt.toISOString() });
         } catch (err) {
             console.error('[Bruno Error] Failed to generate verify token:', err);
         }
 
         const googleButton = new ButtonBuilder()
             .setLabel('Sign in with Google')
+            .setEmoji('1135189809711820840')
             .setURL(`https://brunov.juainny.com/verify?token=${token}`)
             .setStyle(ButtonStyle.Link);
 
         const emailButton = new ButtonBuilder()
             .setCustomId('verify_email_modal_trigger')
             .setLabel('Verify via Email Code')
+            .setEmoji('1460785586284531856')
             .setStyle(ButtonStyle.Primary);
 
-        // CASE 1: No email provided - show choices
-        if (!email) {
-            const embed = new EmbedBuilder()
-                .setTitle('How would you like to verify? 🦴')
-                .setDescription('Choose a method below to verify your Brunonian status. Google Login is recommended for speed!')
-                .setColor(0x591C0B)
-                .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
+        const embed = new EmbedBuilder()
+            .setTitle('How would you like to verify? 🦴')
+            .setDescription('Choose a method below to verify your Brunonian status. Google Login is recommended for speed!')
+            .setColor(0x591C0B)
+            .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
 
-            const choiceRow = new ActionRowBuilder().addComponents(googleButton, emailButton);
-            return interaction.reply({ embeds: [embed], components: [choiceRow], ephemeral: true });
-        }
-
-        // CASE 2: Email provided - process immediately
-        await interaction.deferReply({ ephemeral: true });
-
-        if (!email.includes('@')) {
-            email = `${email}@brown.edu`;
-        }
-
-        const isAlumni = email.endsWith('@alumni.brown.edu');
-        const isStudent = email.endsWith('@brown.edu');
-
-        if (!isStudent && !isAlumni) {
-            return interaction.editReply({
-                content: '<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** or **@alumni.brown.edu** email! Are you really a brunonian? <:bearbear:1458612533492711434>',
-                components: [new ActionRowBuilder().addComponents(googleButton)]
-            });
-        }
-
-        try {
-            console.log(`[Bruno Log] Verifying for User ${discordUserId}`);
-            const emailHash = hashEmail(email);
-
-            // Check existing
-            const { data: existing, error: checkError } = await supabase
-                .from('verifications')
-                .select('id')
-                .eq('email_hash', emailHash)
-                .maybeSingle();
-
-            if (checkError) {
-                console.error('[Bruno Error] Supabase Check Failed:', checkError);
-                return interaction.editReply('My database brain froze! Pls try again later.');
-            }
-
-            if (existing) {
-                console.log(`[Bruno Log] User ${discordUserId} is already verified but is re-requesting a code to potentially update roles.`);
-            }
-
-            // Code Generation Logic
-            let code;
-            if (isAlumni) {
-                code = Math.floor(900000 + Math.random() * 99999).toString();
-            } else {
-                code = Math.floor(100000 + Math.random() * 800000).toString();
-            }
-
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-            // Save Pending Code
-            const { error: upsertError } = await supabase
-                .from('pending_codes')
-                .upsert({
-                    discord_id: discordUserId,
-                    code,
-                    email_hash: emailHash,
-                    expires_at: expiresAt.toISOString(),
-                }, { onConflict: 'discord_id' });
-
-            if (upsertError) {
-                console.error('[Bruno Error] Supabase Upsert Failed:', upsertError);
-                throw upsertError;
-            }
-
-            // Send Styled Email
-            const settings = await getServerConfig();
-            const resendResponse = await resend.emails.send({
-                from: settings.emailFromAddress,
-                to: email,
-                subject: 'Bruno\'s Secret Code for You',
-                html: `
-                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #FDFBF7; border-radius: 20px; text-align: center;">
-                      <h1 style="color: #591C0B; font-size: 28px;">Verification Time! 🐻</h1>
-                      <p style="font-size: 16px; color: #4A3728;">Hi Brunonian! We got your discord command, grab this code to verify your acceptance and get that role!:</p>
-                      
-                      <div style="background: #FFF; border: 2px dashed #CE1126; padding: 20px; text-align: center; border-radius: 12px; font-size: 36px; font-weight: 800; letter-spacing: 5px; margin: 30px auto; color: #CE1126; max-width: 200px;">
-                        ${code}
-                      </div>
-                      
-                      <p style="color: #8C6B5D; font-size: 14px;">This code self-destructs (expires) in 10 minutes.</p>
-                      <hr style="border: 0; border-top: 1px solid #CE1126; opacity: 0.2; margin: 30px 0;">
-                      <p style="color: #8C6B5D; font-size: 12px;">
-                        <a href="https://brunov.juainny.com/terms" style="color: #CE1126; text-decoration: none; font-weight: bold;">Terms</a> • <a href="https://brunov.juainny.com/privacy" style="color: #CE1126; text-decoration: none; font-weight: bold;">Privacy Policy</a> • We hashed your email to protect your identity.
-                      </p>
-                    </div>
-                `
-            });
-
-            if (resendResponse.error) {
-                console.error('[Bruno Error] Resend Failed:', resendResponse.error);
-                throw resendResponse.error;
-            }
-
-            console.log(`[Bruno Log] Email successfully queued/sent. Resend ID: ${resendResponse.data?.id}`);
-            await interaction.editReply({
-                content: '<:bearbear:1458612533492711434> I sent my pigeon friend to your **Brown email**! Please **check your inbox**. Then, use the `/confirm` command with the code I sent you.\n\n**💡 Tip:** Use the `class_year` option in `/confirm` to get your graduation roles!\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy)',
-                components: [new ActionRowBuilder().addComponents(googleButton)]
-            });
-        } catch (err) {
-            console.error('[Bruno Error] /verify handler exception:', err);
-            await interaction.editReply('Error! My pigeons are on strike and my email was not sent. Try again later.');
-        }
+        const choiceRow = new ActionRowBuilder().addComponents(googleButton, emailButton);
+        return interaction.reply({ embeds: [embed], components: [choiceRow], ephemeral: true });
     }
 
     if (commandName === 'confirm') {

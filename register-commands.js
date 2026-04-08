@@ -7,14 +7,6 @@ const commands = [
     {
         name: 'verify',
         description: 'Start the verification process (Email or Google)',
-        options: [
-            {
-                name: 'email',
-                description: 'Optional: Your @brown.edu or @alumni.brown.edu email',
-                type: ApplicationCommandOptionType.String,
-                required: false,
-            },
-        ],
     },
     {
         name: 'confirm',

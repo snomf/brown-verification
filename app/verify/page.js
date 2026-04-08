@@ -81,7 +81,10 @@ export default function Verify() {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
-        if ((urlParams.get('method') === 'google' || token) && !loading) {
+        const isGoogleAuthReturn = urlParams.get('google_auth') === 'true';
+        
+        // Prevent auto-login loop if returning from Google Auth
+        if (!isGoogleAuthReturn && (urlParams.get('method') === 'google' || token) && !loading) {
             // Trigger auto-login for Google if requested or if arrived via token
             initGoogleAuth();
         }
