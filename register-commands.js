@@ -6,13 +6,23 @@ const { getServerConfig } = require('./lib/config');
 const commands = [
     {
         name: 'verify',
-        description: 'Start the verification process with your Brown email',
+        description: 'Start the verification process (Email or Google)',
         options: [
+            {
+                name: 'method',
+                description: 'Choose your verification method',
+                type: ApplicationCommandOptionType.String,
+                required: false,
+                choices: [
+                    { name: 'Google Login (Recommended)', value: 'google' },
+                    { name: 'Email Selection', value: 'email' },
+                ]
+            },
             {
                 name: 'email',
                 description: 'Your @brown.edu or @alumni.brown.edu email',
                 type: ApplicationCommandOptionType.String,
-                required: true,
+                required: false,
             },
         ],
     },

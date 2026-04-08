@@ -70,6 +70,14 @@ export default function Verify() {
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('method') === 'google' && user && !loading) {
+            // Trigger auto-login
+            initGoogleAuth();
+        }
+    }, [user, loading]);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('google_auth') === 'true') {
             const handleGoogleAuthReturn = async () => {
                 setLoading(true);

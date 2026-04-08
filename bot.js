@@ -150,6 +150,25 @@ async function logToChannel(discordUserId, method = 'command') {
 
 client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) {
+        const customId = interaction.customId;
+
+        // Verify Methods Choice (Publicly Accessible)
+        if (customId === 'verify_email_modal_trigger') {
+            const modal = new ModalBuilder()
+                .setCustomId('verify_email_modal')
+                .setTitle('Verify via Email Code 🐻');
+
+            const emailInput = new TextInputBuilder()
+                .setCustomId('email_input')
+                .setLabel('Your Brown Email (@brown.edu)')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('josiah_carberry@brown.edu')
+                .setRequired(true);
+
+            modal.addComponents(new ActionRowBuilder().addComponents(emailInput));
+            return interaction.showModal(modal);
+        }
+
         const settings = await getServerConfig();
         const allowedRoles = [...(settings.allowedModRoleIds || []), ...(settings.adminRoleIds || [])];
         
@@ -164,7 +183,6 @@ client.on('interactionCreate', async interaction => {
             return interaction.reply({ content: 'You are not authorized to use these buttons.', ephemeral: true });
         }
 
-        const customId = interaction.customId;
         if (!customId.startsWith('verify_')) return;
 
         await interaction.deferUpdate();
@@ -262,6 +280,74 @@ client.on('interactionCreate', async interaction => {
                 return interaction.reply({ content: '❌ Failed to update status.', ephemeral: true });
             }
         }
+
+        if (interaction.customId === 'verify_email_modal') {
+            await interaction.deferReply({ ephemeral: true });
+            let email = interaction.fields.getTextInputValue('email_input').trim().toLowerCase();
+            
+            if (!email.includes('@')) {
+                email = `${email}@brown.edu`;
+            }
+
+            const googleButton = new ButtonBuilder()
+                .setLabel('Sign in with Google')
+                .setURL('https://brunov.juainny.com/verify?method=google')
+                .setStyle(ButtonStyle.Link);
+
+            const isAlumni = email.endsWith('@alumni.brown.edu');
+            const isStudent = email.endsWith('@brown.edu');
+
+            if (!isStudent && !isAlumni) {
+                return interaction.editReply({
+                    content: '<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** or **@alumni.brown.edu** email!',
+                    components: [new ActionRowBuilder().addComponents(googleButton)]
+                });
+            }
+
+            try {
+                const emailHash = hashEmail(email);
+                let code;
+                if (isAlumni) {
+                    code = Math.floor(900000 + Math.random() * 99999).toString();
+                } else {
+                    code = Math.floor(100000 + Math.random() * 800000).toString();
+                }
+
+                const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+                await supabase.from('pending_codes').upsert({
+                    discord_id: interaction.user.id,
+                    code,
+                    email_hash: emailHash,
+                    expires_at: expiresAt.toISOString(),
+                }, { onConflict: 'discord_id' });
+
+                const settings = await getServerConfig();
+                await resend.emails.send({
+                    from: settings.emailFromAddress,
+                    to: email,
+                    subject: 'Bruno\'s Secret Code for You',
+                    html: `
+                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #FDFBF7; border-radius: 20px; text-align: center;">
+                          <h1 style="color: #591C0B; font-size: 28px;">Verification Time! 🐻</h1>
+                          <p style="font-size: 16px; color: #4A3728;">Hi Brunonian! Drop this code in /confirm:</p>
+                          <div style="background: #FFF; border: 2px dashed #CE1126; padding: 20px; text-align: center; border-radius: 12px; font-size: 36px; font-weight: 800; letter-spacing: 5px; margin: 30px auto; color: #CE1126; max-width: 200px;">
+                            ${code}
+                          </div>
+                          <p style="color: #8C6B5D; font-size: 14px;">Expires in 10 minutes.</p>
+                        </div>
+                    `
+                });
+
+                return interaction.editReply({
+                    content: '<:bearbear:1458612533492711434> I sent the code to your **Brown email**! Please check your inbox and use `/confirm`.',
+                    components: [new ActionRowBuilder().addComponents(googleButton)]
+                });
+            } catch (err) {
+                console.error('[Bruno Error] Modal verify failed:', err);
+                return interaction.editReply('Error! My pigeons are on strike.');
+            }
+        }
     }
 
 
@@ -271,14 +357,48 @@ client.on('interactionCreate', async interaction => {
     const discordUserId = user.id;
 
     if (commandName === 'verify') {
+        const method = options.getString('method');
+        let email = options.getString('email')?.trim().toLowerCase();
+
+        const googleButton = new ButtonBuilder()
+            .setLabel('Sign in with Google')
+            .setURL('https://brunov.juainny.com/verify?method=google')
+            .setStyle(ButtonStyle.Link);
+
+        const emailButton = new ButtonBuilder()
+            .setCustomId('verify_email_modal_trigger')
+            .setLabel('Verify via Email Code')
+            .setStyle(ButtonStyle.Primary);
+
+        const row = new ActionRowBuilder().addComponents(googleButton);
+
+        // CASE 1: User explicitly chose Google or no options were provided but we want to show Google
+        if (method === 'google') {
+            const embed = new EmbedBuilder()
+                .setTitle('Google Verification 🐻')
+                .setDescription('Click the button below to verify your Brown identity using Google. This is the fastest way to get your role!')
+                .setColor(0x591C0B)
+                .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
+
+            return interaction.reply({ embeds: [embed], components: [new ActionRowBuilder().addComponents(googleButton)], ephemeral: true });
+        }
+
+        // CASE 2: No email and no specific method (or 'email' method chosen without email)
+        if (!email) {
+            const embed = new EmbedBuilder()
+                .setTitle('How would you like to verify? 🦴')
+                .setDescription('Choose a method below to verify your Brunonian status. Google Login is recommended for speed!')
+                .setColor(0x591C0B)
+                .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
+
+            const choiceRow = new ActionRowBuilder().addComponents(googleButton, emailButton);
+            return interaction.reply({ embeds: [embed], components: [choiceRow], ephemeral: true });
+        }
+
+        // CASE 3: Process Email Flow (Email was provided)
         await interaction.deferReply({ ephemeral: true });
 
-        // Constants
-        const ALUMNI_PREFIX = '9';
-
-        let email = options.getString('email')?.trim().toLowerCase();
-        if (!email) return interaction.editReply('Sniff... you forgot to give me an email! Lets give that another try? <:bearbear:1458612533492711434>');
-
+        // Proceed with existing email logic...
         if (!email.includes('@')) {
             email = `${email}@brown.edu`;
         }
@@ -287,7 +407,10 @@ client.on('interactionCreate', async interaction => {
         const isStudent = email.endsWith('@brown.edu');
 
         if (!isStudent && !isAlumni) {
-            return interaction.editReply('<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** or **@alumni.brown.edu** email! Are you really a brunonian? <:bearbear:1458612533492711434>');
+            return interaction.editReply({
+                content: '<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** or **@alumni.brown.edu** email! Are you really a brunonian? <:bearbear:1458612533492711434>',
+                components: [new ActionRowBuilder().addComponents(googleButton)]
+            });
         }
 
         try {
@@ -310,11 +433,7 @@ client.on('interactionCreate', async interaction => {
                 console.log(`[Bruno Log] User ${discordUserId} is already verified but is re-requesting a code to potentially update roles.`);
             }
 
-            const isAlumni = email.includes('@alumni.brown.edu');
-
             // Code Generation Logic
-            // Alumni Codes: 900000 - 999999
-            // Standard Codes: 100000 - 899999
             let code;
             if (isAlumni) {
                 code = Math.floor(900000 + Math.random() * 99999).toString();
@@ -369,7 +488,10 @@ client.on('interactionCreate', async interaction => {
             }
 
             console.log(`[Bruno Log] Email successfully queued/sent. Resend ID: ${resendResponse.data?.id}`);
-            await interaction.editReply('<:bearbear:1458612533492711434> I sent my pigeon friend to your **Brown email**! Please **check your inbox**. Then, use the `/confirm` command with the code I sent you.\n\n**💡 Tip:** Use the `class_year` option in `/confirm` to get your graduation roles!\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy)');
+            await interaction.editReply({
+                content: '<:bearbear:1458612533492711434> I sent my pigeon friend to your **Brown email**! Please **check your inbox**. Then, use the `/confirm` command with the code I sent you.\n\n**💡 Tip:** Use the `class_year` option in `/confirm` to get your graduation roles!\n\nCheck our [Terms](https://brunov.juainny.com/terms) & [Privacy Policy](https://brunov.juainny.com/privacy)',
+                components: [new ActionRowBuilder().addComponents(googleButton)]
+            });
         } catch (err) {
             console.error('[Bruno Error] /verify handler exception:', err);
             await interaction.editReply('Error! My pigeons are on strike and my email was not sent. Try again later.');
