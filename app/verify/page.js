@@ -24,6 +24,8 @@ export default function Verify() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [resendTimer, setResendTimer] = useState(0);
+    const [isBotVerify, setIsBotVerify] = useState(false);
+    const [verifiedDiscordUsername, setVerifiedDiscordUsername] = useState(null);
 
     // Explicit bear message override when needed
     const [customBearMessage, setCustomBearMessage] = useState(null);
@@ -115,8 +117,16 @@ export default function Verify() {
                             });
                             const data = await res.json();
                             if (!res.ok) throw new Error(data.message);
+                            
                             setStep('success');
                             setCustomBearMessage(data.message);
+                            
+                            if (urlParams.get('from_bot') === 'true') {
+                                setIsBotVerify(true);
+                            }
+                            if (data.discordUsername) {
+                                setVerifiedDiscordUsername(data.discordUsername);
+                            }
                         } else {
                             throw new Error("No Google identity found. Please try again.");
                         }
@@ -141,7 +151,7 @@ export default function Verify() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             const finalClassYear = showClassOptions ? classYear : '2030';
-            const redirectUrl = `${window.location.origin}/verify?google_auth=true&year=${finalClassYear}${token ? `&token=${token}` : ''}`;
+            const redirectUrl = `${window.location.origin}/verify?google_auth=true&year=${finalClassYear}${token ? `&token=${token}&from_bot=true` : ''}`;
 
             if (user) {
                 // Link to existing account
@@ -456,10 +466,10 @@ export default function Verify() {
                                     </div>
                                     <div>
                                         <h2 className="text-3xl font-black text-[#591C0B] dark:text-amber-500 mb-1">
-                                            {customBearMessage || "You're In!"}
+                                            {isBotVerify ? `Nice, ${verifiedDiscordUsername || 'Brunonian'}!` : (customBearMessage || "You're In!")}
                                         </h2>
                                         <p className="text-[#8C6B5D] dark:text-stone-400 font-medium leading-tight">
-                                            Role assigned. You're now a verified Brunonian.
+                                            {isBotVerify ? "Thanks for verifying using Google with the bot! I've assigned your roles in the Discord server." : "Role assigned. You're now a verified Brunonian."}
                                         </p>
                                     </div>
                                 </div>

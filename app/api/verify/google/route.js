@@ -72,7 +72,7 @@ export async function POST(req) {
             
             if (classYear === '2030') {
                 rolesToAssign.push(ROLES.STUDENT);
-                verificationType = '2030';
+                verificationType = 'accepted';
                 successMsg = "Welcome, Class of '30! Verified via Google.";
             } else if (classYear && ROLES[classYear]) {
                 rolesToAssign.push(ROLES.STUDENT);
@@ -84,6 +84,7 @@ export async function POST(req) {
             }
         }
 
+        let discordUsername = 'Brunonian';
         try {
             const resp = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}`, {
                 method: 'GET',
@@ -94,6 +95,7 @@ export async function POST(req) {
             if (!resp.ok) throw new Error("Discord member not found.");
             
             const memberData = await resp.json();
+            discordUsername = memberData.user?.username || 'Brunonian';
             const currentRoles = memberData.roles || [];
 
             for (const roleId of rolesToAssign) {
@@ -126,7 +128,7 @@ export async function POST(req) {
         // Log to Discord Channel
         logToChannel(discordUserId, 'website_google').catch(console.error);
 
-        return NextResponse.json({ success: true, message: successMsg });
+        return NextResponse.json({ success: true, message: successMsg, discordUsername });
     } catch (error) {
         console.error('Google Verify Error:', error);
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
