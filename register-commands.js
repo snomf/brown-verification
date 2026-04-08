@@ -1,5 +1,7 @@
-require('dotenv').config({ path: '.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
+const { getServerConfig } = require('./lib/config');
 
 const commands = [
     {
@@ -138,10 +140,11 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN)
     try {
         console.log('Started refreshing application (/) commands.');
 
-        const clientId = process.env.DISCORD_CLIENT_ID;
-        const guildId = process.env.DISCORD_GUILD_ID;
+        const settings = await getServerConfig();
+        const clientId = process.env.DISCORD_CLIENT_ID || settings.botId;
+        const guildId = process.env.DISCORD_GUILD_ID || settings.guildId;
 
-        if (!clientId) throw new Error("DISCORD_CLIENT_ID is missing!");
+        if (!clientId) throw new Error("DISCORD_CLIENT_ID (or bot_id in Supabase) is missing!");
 
         // 1. ALWAYS clear global commands first to resolve duplicates
         console.log('Cleaning up global commands (this prevents duplicates)...');
