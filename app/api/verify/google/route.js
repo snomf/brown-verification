@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { getServerConfig } from '@/lib/config';
+import { logToChannel } from '@/lib/discord';
 
 export async function POST(req) {
     try {
@@ -101,6 +102,9 @@ export async function POST(req) {
         if (insertError) {
             console.error('Failed to log Google verification to DB:', insertError);
         }
+
+        // Log to Discord Channel
+        logToChannel(discordUserId, 'website_google').catch(console.error);
 
         return NextResponse.json({ success: true, message: successMsg });
     } catch (error) {

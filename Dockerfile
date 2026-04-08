@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm install --omit=dev
 
 # Copy bot code and necessary libs
-COPY bot.js ./
+COPY bot.js register-commands.js .env.example ./
 COPY lib/ ./lib/
 
 # The bot doesn't need to expose ports, but we'll include it if needed

@@ -213,9 +213,13 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          v.verification_method === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          v.verification_method === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 
+                          v.verification_method === 'website_google' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                          'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                         }`}>
-                          {v.verification_method === 'admin' ? 'Admin Verified' : 'Email Verified'}
+                          {v.verification_method === 'admin' ? 'Admin Verified' : 
+                           v.verification_method === 'website_google' ? 'Google Verified' : 
+                           'Email Verified'}
                         </span>
                         <span className="text-[10px] font-black uppercase text-[#8C6B5D] dark:text-stone-500 pl-1">
                           {v.type || 'Accepted'}

@@ -2,8 +2,8 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { createClient } = require('@supabase/supabase-js');
-const { Resend } = require('resend');
+const { supabaseAdmin: supabase } = require('./lib/supabase');
+const { getServerConfig } = require('./lib/config');
 const crypto = require('crypto');
 
 const VERSION = '1.0.1';
@@ -50,60 +50,20 @@ function hashEmail(email) {
     return crypto.createHash('sha256').update(cleanEmail).digest('hex');
 }
 
-async function getServerSettings() {
-    try {
-        const { data, error } = await supabase.from('server_settings').select('*').eq('id', 1).single();
-        if (error) throw error;
-        return {
-            adminRoleIds: data.admin_role_ids ? data.admin_role_ids.split(',').map(id => id.trim()) : (process.env.DISCORD_ADMIN_ROLE_ID ? [process.env.DISCORD_ADMIN_ROLE_ID] : []),
-            modChannelId: data.mod_review_channel_id || process.env.MOD_REVIEW_CHANNEL_ID,
-            allowedModRoleIds: data.allowed_mod_role_ids ? data.allowed_mod_role_ids.split(',').map(id => id.trim()) : (process.env.ALLOWED_MOD_ROLE_IDS ? process.env.ALLOWED_MOD_ROLE_IDS.split(',').map(id => id.trim()) : []),
-            emailFromAddress: data.email_from_address || process.env.EMAIL_FROM_ADDRESS || 'Bruno Verifies <verify@brunov.juainny.com>',
-            statusText: data.bot_status_text || "ROARRRRRRRRR! 🐻 I'm verifying Students!",
-            statusPresence: data.bot_status_presence || 'online',
-            guildId: data.guild_id || process.env.DISCORD_GUILD_ID,
-            botId: data.bot_id || process.env.DISCORD_CLIENT_ID,
-            roles: {
-                ACCEPTED: data.role_accepted || process.env.DISCORD_ROLE_ID,
-                CERTIFIED: data.role_certified || process.env.DISCORD_CERTIFIED_ROLE_ID,
-                ALUMNI: data.role_alumni || process.env.DISCORD_ALUMNI_ROLE_ID,
-                STUDENT: data.role_student || process.env.DISCORD_STUDENT_ROLE_ID,
-                '2026': data.role_2026 || process.env.DISCORD_ROLE_2026,
-                '2027': data.role_2027 || process.env.DISCORD_ROLE_2027,
-                '2028': data.role_2028 || process.env.DISCORD_ROLE_2028,
-                '2029': data.role_2029 || process.env.DISCORD_ROLE_2029,
-                '2030': data.role_2030 || process.env.DISCORD_ROLE_2030
-            }
-        };
-    } catch (e) {
-        return {
-            adminRoleIds: process.env.DISCORD_ADMIN_ROLE_ID ? [process.env.DISCORD_ADMIN_ROLE_ID] : [],
-            modChannelId: process.env.MOD_REVIEW_CHANNEL_ID,
-            allowedModRoleIds: process.env.ALLOWED_MOD_ROLE_IDS ? process.env.ALLOWED_MOD_ROLE_IDS.split(',').map(id => id.trim()) : [],
-            emailFromAddress: process.env.EMAIL_FROM_ADDRESS || 'Bruno Verifies <verify@brunov.juainny.com>',
-            statusText: "ROARRRRRRRRR! 🐻 I'm verifying Students!",
-            statusPresence: 'online',
-            guildId: process.env.DISCORD_GUILD_ID,
-            botId: process.env.DISCORD_CLIENT_ID,
-            roles: {
-                ACCEPTED: process.env.DISCORD_ROLE_ID,
-                CERTIFIED: process.env.DISCORD_CERTIFIED_ROLE_ID,
-                ALUMNI: process.env.DISCORD_ALUMNI_ROLE_ID,
-                STUDENT: process.env.DISCORD_STUDENT_ROLE_ID,
-                '2026': process.env.DISCORD_ROLE_2026,
-                '2027': process.env.DISCORD_ROLE_2027,
-                '2028': process.env.DISCORD_ROLE_2028,
-                '2029': process.env.DISCORD_ROLE_2029,
-            }
-        };
-    }
-}
+// getServerSettings has been replaced by lib/config.js:getServerConfig() for unification.
 
 async function isUserAdmin(user, settings) {
-    if (!settings.adminRoleIds || settings.adminRoleIds.length === 0) return false;
+    if (!settings || !settings.adminRoleIds || settings.adminRoleIds.length === 0) return false;
     
     try {
-        const guild = await client.guilds.fetch(settings.guildId);
+        if (!settings.guildId) return false;
+        
+        const guild = await client.guilds.fetch(settings.guildId).catch(() => null);
+        if (!guild) {
+            console.warn(`[Bruno Warn] Could not fetch guild ${settings.guildId} for admin check.`);
+            return false;
+        }
+
         const member = await guild.members.fetch(user.id).catch(() => null);
         if (!member) return false;
         
@@ -114,14 +74,14 @@ async function isUserAdmin(user, settings) {
     }
 }
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
     console.log('Bruno is ONLINE. Sniffing for logs...');
 
-    const settings = await getServerSettings();
+    const settings = await getServerConfig();
     client.user.setPresence({
-        activities: [{ name: 'Custom Status', state: settings.statusText, type: 4 }],
-        status: settings.statusPresence,
+        activities: [{ name: 'Custom Status', state: settings.botStatusText, type: 4 }],
+        status: settings.botStatusPresence,
     });
 });
 
@@ -701,7 +661,7 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (commandName === 'manage') {
-        const settings = await getServerSettings();
+        const settings = await getServerConfig();
         const isAdmin = await isUserAdmin(interaction.user, settings);
 
         if (!isAdmin) {
