@@ -4,6 +4,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env'), override: true })
 const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { supabaseAdmin: supabase } = require('./lib/supabase');
 const { getServerConfig } = require('./lib/config');
+const { Resend } = require('resend');
 const crypto = require('crypto');
 
 const VERSION = '1.0.1';
@@ -23,23 +24,7 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
-// Environment variable helper
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
-const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '').trim();
-
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error('CRITICAL ERROR: Supabase configuration is missing or empty!');
-    console.error('Check your .env file or environment variables.');
-    process.exit(1);
-}
-
-let supabase;
-try {
-    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-} catch (err) {
-    console.error('CRITICAL ERROR: Failed to initialize Supabase client:', err.message);
-    process.exit(1);
-}
+// Supabase is already initialized and imported from ./lib/supabase
 if (!process.env.RESEND_API_KEY) {
     console.warn('[Bruno Warn] RESEND_API_KEY is missing! Emails will fail.');
 }
