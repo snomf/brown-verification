@@ -332,7 +332,7 @@ client.on('interactionCreate', async interaction => {
                 }, { onConflict: 'discord_id' });
 
                 const settings = await getServerConfig();
-                await resend.emails.send({
+                const resendResponse = await resend.emails.send({
                     from: settings.emailFromAddress,
                     to: email,
                     subject: 'Bruno\'s Secret Code for You',
@@ -347,6 +347,11 @@ client.on('interactionCreate', async interaction => {
                         </div>
                     `
                 });
+
+                if (resendResponse.error) {
+                    console.error('[Bruno Error] Resend Email Failed:', resendResponse.error);
+                    throw new Error(`Email bounced: ${resendResponse.error.message}`);
+                }
 
                 // Include token in Google button even in email flow as a fallback
                 const token = crypto.randomUUID();
@@ -366,11 +371,10 @@ client.on('interactionCreate', async interaction => {
                 });
             } catch (err) {
                 console.error('[Bruno Error] Modal verify failed:', err);
-                return interaction.editReply('Error! My pigeons are on strike.');
+                return interaction.editReply(`Error! My pigeons are on strike: ${err.message || ''}`);
             }
         }
     }
-
 
     if (!interaction.isChatInputCommand()) return;
 
