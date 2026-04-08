@@ -45,14 +45,14 @@ async function isUserAdmin(user, settings) {
 
     // 2. Check Role IDs
     if (!settings.adminRoleIds || settings.adminRoleIds.length === 0) return false;
-    
+
     try {
         if (!settings.guildId) {
             // If we don't have a guild ID, we can't check roles safely, 
             // but we already checked the direct User ID bypass above.
             return false;
         }
-        
+
         const guild = await client.guilds.fetch(settings.guildId).catch(() => null);
         if (!guild) {
             console.warn(`[Bruno Warn] Could not fetch guild ${settings.guildId} for admin check.`);
@@ -61,7 +61,7 @@ async function isUserAdmin(user, settings) {
 
         const member = await guild.members.fetch(user.id).catch(() => null);
         if (!member) return false;
-        
+
         return settings.adminRoleIds.some(roleId => member.roles.cache.has(roleId));
     } catch (err) {
         console.error('[Bruno Error] Failed to check admin status:', err);
@@ -74,7 +74,7 @@ client.once('ready', async () => {
     console.log('Bruno is ONLINE. Sniffing for logs...');
 
     const settings = await getServerConfig();
-    
+
     const updatePresence = (config) => {
         console.log(`[Config Log] Updating presence: ${config.botStatusPresence} | ${config.botStatusText}`);
         client.user.setPresence({
@@ -171,7 +171,7 @@ client.on('interactionCreate', async interaction => {
 
         const settings = await getServerConfig();
         const allowedRoles = [...(settings.allowedModRoleIds || []), ...(settings.adminRoleIds || [])];
-        
+
         const memberRoles = Array.isArray(interaction.member?.roles)
             ? interaction.member?.roles
             : (interaction.member?.roles?.cache ? interaction.member?.roles.cache.map(r => r.id) : []);
@@ -266,7 +266,7 @@ client.on('interactionCreate', async interaction => {
                     activities: [{ name: 'Custom Status', state: text, type: 4 }],
                     status: presence,
                 });
-                
+
                 // Persist to Supabase
                 await supabase.from('server_settings').update({
                     bot_status_presence: presence,
@@ -284,7 +284,7 @@ client.on('interactionCreate', async interaction => {
         if (interaction.customId === 'verify_email_modal') {
             await interaction.deferReply({ ephemeral: true });
             let email = interaction.fields.getTextInputValue('email_input').trim().toLowerCase();
-            
+
             if (!email.includes('@')) {
                 email = `${email}@brown.edu`;
             }
@@ -359,7 +359,7 @@ client.on('interactionCreate', async interaction => {
                 try {
                     await supabase.from('verify_tokens').insert({ token, discord_id: interaction.user.id, expires_at: tokenExpiresAt.toISOString() });
                 } catch (tokErr) { console.error('Token fallback failed', tokErr); }
-                
+
                 const googleTokenButton = new ButtonBuilder()
                     .setLabel('Sign in with Google')
                     .setURL(`https://brunov.juainny.com/verify?token=${token}`)
@@ -385,7 +385,7 @@ client.on('interactionCreate', async interaction => {
         // One-time token generation for Google Login bypass
         const token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
-        
+
         try {
             await supabase.from('verify_tokens').insert({ token, discord_id: discordUserId, expires_at: expiresAt.toISOString() });
         } catch (err) {
@@ -405,7 +405,7 @@ client.on('interactionCreate', async interaction => {
             .setStyle(ButtonStyle.Primary);
 
         const embed = new EmbedBuilder()
-            .setTitle('How would you like to verify? 🦴')
+            .setTitle('How would you like to verify? (There are options!)')
             .setDescription('Choose a method below to verify your Brunonian status. Google Login is recommended for speed!')
             .setColor(0x591C0B)
             .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
@@ -460,14 +460,14 @@ client.on('interactionCreate', async interaction => {
                     rolesToAssign.push(ROLES[classYear]);
                     successMsg = `<:brunobear:1460379061816787139> Welcome back, Class of '${classYear.slice(2)}! You've been verified and certified. 🐻`;
                 } else {
-                    successMsg = "You're verified, certified, Bruno-approved, and 100% brunonian! Welcome home! 🐻‍❄️✨";
+                    successMsg = "You're verified, certified, Bruno-approved, yes, and 100% brunonian! Welcome home! 🐻";
                 }
             }
 
             // Assign Roles
             const targetGuildId = guildId || settings.guildId;
-            if (!targetGuildId) throw new Error("No guild ID available to process verification.");
-            
+            if (!targetGuildId) throw new Error("No guild ID available to process verification. Tell admin");
+
             const guild = await client.guilds.fetch(targetGuildId);
             const member = await guild.members.fetch(discordUserId);
 
@@ -538,7 +538,7 @@ client.on('interactionCreate', async interaction => {
             const hasPermission = memberRoles.some(role => allowedRoles.includes(role));
 
             if (!hasPermission) {
-                return interaction.editReply('<:BearShock:1460381158134120529> Roar! You are not authorized to use this command.');
+                return interaction.editReply('<:BearShock:1460381158134120529> Roar! You are not authorized to use this command. The hell!');
             }
 
             const targetUser = options.getUser('user');
@@ -591,7 +591,7 @@ client.on('interactionCreate', async interaction => {
             // Assign Roles
             const targetGuildId = guildId || settings.guildId;
             if (!targetGuildId) throw new Error("No guild ID available to process verification.");
-            
+
             const guild = await client.guilds.fetch(targetGuildId);
             const memberToVerify = await guild.members.fetch(targetUserId);
 
@@ -681,7 +681,7 @@ client.on('interactionCreate', async interaction => {
         }
 
         const expiresAt = new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString(); // 10 years (effectively permanent)
-        
+
         const isApproved = score >= 80;
 
         if (isApproved) {

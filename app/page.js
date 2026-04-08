@@ -13,6 +13,7 @@ import BotStatus from './components/BotStatus';
 export default function Home() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [greetingMsg, setGreetingMsg] = useState('');
@@ -39,24 +40,41 @@ export default function Home() {
 
   useEffect(() => {
     if (user) {
-      setLoggedInMsg(getRandomMessage('loggedIn', { name: user.user_metadata.full_name }));
-      
-      // Check if Admin
-      const checkAdminStatus = async () => {
+      // Check if Admin & Verified
+      const checkStatus = async () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
-          const res = await fetch('/api/admin/check', {
+          
+          // 1. Check Admin
+          const adminRes = await fetch('/api/admin/check', {
             headers: { 'Authorization': `Bearer ${session?.access_token}` }
           });
-          const data = await res.json();
-          setIsAdmin(data.isAdmin);
+          const adminData = await adminRes.json();
+          setIsAdmin(adminData.isAdmin);
+
+          // 2. Check Verified (Look for discord_id in verifications table)
+          const { data: verifiedData } = await supabase
+            .from('verifications')
+            .select('id')
+            .eq('discord_id', user.id)
+            .maybeSingle();
+          
+          const verified = !!verifiedData;
+          setIsVerified(verified);
+
+          // Set message after status is checked
+          setLoggedInMsg(getRandomMessage(verified ? 'alreadyVerified' : 'loggedIn', { name: user.user_metadata.full_name || user.user_metadata.name || 'Brunonian' }));
         } catch (err) {
+          console.error("Status check failed:", err);
           setIsAdmin(false);
+          setIsVerified(false);
+          setLoggedInMsg(getRandomMessage('loggedIn', { name: user.user_metadata.full_name || user.user_metadata.name || 'Brunonian' }));
         }
       };
-      checkAdminStatus();
+      checkStatus();
     } else {
       setIsAdmin(false);
+      setIsVerified(false);
     }
   }, [user]);
 
@@ -190,12 +208,20 @@ export default function Home() {
                         Admin Dash
                       </Link>
                     )}
-                    <a
-                      href="/verify"
-                      className="flex-1 py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black text-center text-lg"
-                    >
-                      Verify Meeee!
-                    </a>
+                    {!isVerified ? (
+                      <a
+                        href="/verify"
+                        className="flex-1 py-4 bg-[#CE1126] text-white font-bold rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-black text-center text-lg"
+                      >
+                        Verify Meeee!
+                      </a>
+                    ) : (
+                      <div
+                        className="flex-1 py-4 bg-gray-200 dark:bg-stone-800 text-gray-400 dark:text-stone-600 font-bold rounded-xl border-2 border-gray-300 dark:border-stone-700 text-center text-lg cursor-not-allowed select-none opacity-80"
+                      >
+                        Already Verified! 🐻
+                      </div>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="px-6 py-4 bg-white dark:bg-stone-800 text-gray-500 dark:text-stone-400 font-bold rounded-xl border-2 border-[#591C0B]/10 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-stone-700 transition-colors shadow-sm"
