@@ -693,9 +693,9 @@ client.on('interactionCreate', async interaction => {
             return interaction.reply({ content: '<:BearShock:1460381158134120529> ROAR! You are not authorized to use this command. Only Admins can manage my brain!', ephemeral: true });
         }
 
-        const subcommand = options.getSubcommand();
+        const action = options.getString('action');
 
-        if (subcommand === 'status') {
+        if (action === 'status') {
             const text = options.getString('text');
             const presence = options.getString('presence');
 
@@ -724,7 +724,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        if (subcommand === 'remind') {
+        if (action === 'remind') {
             const targetUser = options.getUser('user');
             if (!targetUser) return interaction.reply({ content: 'Please specify a user.', ephemeral: true });
 
