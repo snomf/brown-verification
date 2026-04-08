@@ -59,7 +59,17 @@ export default function Verify() {
     useEffect(() => {
         const checkUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            // ################################################################
+            // LOGIN BYPASS LOGIC:
+            // If the user arrives with a 'token', it means they started 
+            // from the Discord bot. We allow them to proceed with Google 
+            // Verification even if they aren't logged into the website with 
+            // Discord yet. We'll use the token to identify them later.
+            // ################################################################
+            if (!user && !token) {
                 router.push('/');
             } else {
                 setUser(user);
@@ -70,8 +80,9 @@ export default function Verify() {
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('method') === 'google' && user && !loading) {
-            // Trigger auto-login
+        const token = urlParams.get('token');
+        if ((urlParams.get('method') === 'google' || token) && !loading) {
+            // Trigger auto-login for Google if requested or if arrived via token
             initGoogleAuth();
         }
     }, [user, loading]);
@@ -81,27 +92,37 @@ export default function Verify() {
         if (urlParams.get('google_auth') === 'true') {
             const handleGoogleAuthReturn = async () => {
                 setLoading(true);
+                const token = urlParams.get('token');
+                
                 setTimeout(async () => {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
-                        if (user && user.identities?.some(i => i.provider === 'google')) {
+                        // If we have a token, we don't strictly need a Discord identity yet
+                        const hasGoogle = user?.identities?.some(i => i.provider === 'google') || user?.app_metadata?.provider === 'google';
+                        
+                        if (user && hasGoogle) {
                             const res = await fetch('/api/verify/google', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ userId: user.id, classYear: urlParams.get('year') || '2030' })
+                                body: JSON.stringify({ 
+                                    userId: user.id, 
+                                    classYear: urlParams.get('year') || '2030',
+                                    token: token // Pass the token to bypass Discord identity check
+                                })
                             });
                             const data = await res.json();
                             if (!res.ok) throw new Error(data.message);
                             setStep('success');
                             setCustomBearMessage(data.message);
                         } else {
-                            throw new Error("No Google identity found.");
+                            throw new Error("No Google identity found. Please try again.");
                         }
                     } catch (err) {
                         setError(err.message);
                         setCustomBearMessage(err.message);
                     } finally {
                         setLoading(false);
+                        // Clean URL but preserve success if needed? Actually success state is in React state.
                         window.history.replaceState({}, document.title, window.location.pathname);
                     }
                 }, 1000);
@@ -114,16 +135,30 @@ export default function Verify() {
         setLoading(true);
         setError(null);
         try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
             const finalClassYear = showClassOptions ? classYear : '2030';
-            await supabase.auth.linkIdentity({
-                provider: 'google',
-                options: {
-                    queryParams: {
-                        prompt: 'select_account'
-                    },
-                    redirectTo: `${window.location.origin}/verify?google_auth=true&year=${finalClassYear}`
-                }
-            });
+            const redirectUrl = `${window.location.origin}/verify?google_auth=true&year=${finalClassYear}${token ? `&token=${token}` : ''}`;
+
+            if (user) {
+                // Link to existing account
+                await supabase.auth.linkIdentity({
+                    provider: 'google',
+                    options: {
+                        queryParams: { prompt: 'select_account' },
+                        redirectTo: redirectUrl
+                    }
+                });
+            } else {
+                // Direct sign in (for token bypass)
+                await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        queryParams: { prompt: 'select_account' },
+                        redirectTo: redirectUrl
+                    }
+                });
+            }
         } catch (err) {
             setError(err.message);
             setLoading(false);

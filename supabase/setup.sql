@@ -22,6 +22,14 @@ CREATE TABLE IF NOT EXISTS pending_codes (
     expires_at TIMESTAMPTZ NOT NULL
 );
 
+-- 2.5 VERIFY TOKENS TABLE
+-- Short-lived tokens for Discord -> Google bridge
+CREATE TABLE IF NOT EXISTS verify_tokens (
+    token UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    discord_id TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL
+);
+
 -- 3. TEMP VERIFICATIONS TABLE
 -- Stores status of acceptance letter image reviews
 CREATE TABLE IF NOT EXISTS temp_verifications (

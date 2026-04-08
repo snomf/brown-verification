@@ -5,7 +5,7 @@ import { logToChannel } from '@/lib/discord';
 
 export async function POST(req) {
     try {
-        const { userId, classYear } = await req.json();
+        const { userId, classYear, token } = await req.json();
         
         const settings = await getServerConfig();
         const guildId = settings.guildId || process.env.DISCORD_GUILD_ID;
@@ -14,11 +14,37 @@ export async function POST(req) {
         const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
         if (userError || !user) throw new Error('User not found.');
 
-        const googleIdentity = user.identities?.find(i => i.provider === 'google');
+        const googleIdentity = user.identities?.find(i => i.provider === 'google') || (user.app_metadata?.provider === 'google' ? { identity_data: user.user_metadata } : null);
         if (!googleIdentity) throw new Error('No Google identity linked.');
 
         const email = googleIdentity.identity_data.email?.toLowerCase();
         if (!email) throw new Error('No email found in Google identity.');
+
+        let discordUserId;
+
+        if (token) {
+            // Token Bypass Logic
+            const { data: tokenRecord, error: tokenError } = await supabase
+                .from('verify_tokens')
+                .select('*')
+                .eq('token', token)
+                .single();
+
+            if (tokenError || !tokenRecord) throw new Error('Invalid or expired verification token.');
+            if (new Date(tokenRecord.expires_at) < new Date()) {
+                await supabase.from('verify_tokens').delete().eq('token', token);
+                throw new Error('Verification token has expired.');
+            }
+
+            discordUserId = tokenRecord.discord_id;
+            // Cleanup token
+            await supabase.from('verify_tokens').delete().eq('token', token);
+        } else {
+            // Original Identity Logic
+            const discordIdentity = user.identities?.find(i => i.provider === 'discord');
+            if (!discordIdentity) throw new Error('No Discord identity linked. Please log in with Discord first or use the bot command.');
+            discordUserId = discordIdentity.id;
+        }
 
         const allowedDomains = settings.allowedEmailDomains || ['@brown.edu', '@alumni.brown.edu'];
         const isAllowedDomain = allowedDomains.some(domain => email.endsWith(domain));
@@ -28,12 +54,6 @@ export async function POST(req) {
         }
 
         const isAlumni = email.endsWith('alumni.brown.edu') || email.includes('alumni');
-        const isStudent = !isAlumni;
-
-        const discordIdentity = user.identities?.find(i => i.provider === 'discord');
-        if (!discordIdentity) throw new Error('No Discord identity linked.');
-
-        const discordUserId = discordIdentity.id;
 
         // Roles
         const rolesToAssign = [];

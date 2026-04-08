@@ -16,6 +16,14 @@
 5.  **Confirmation**: The user saves the code or approves OAuth.
 6.  **Role Assignment**: The bot immediately assigns the verified class roles in Discord.
 
+### 🚀 Login-less Verification Flow (Token Bypass)
+To make verification as seamless as possible, we use a **One-Time Token (OTT)** system that allows users starting from Discord to bypass the website's Discord login requirement:
+1.  **Bot Generation**: When a user runs `/verify` in Discord, the bot generates a secure, short-lived UUID token linked to that user's Discord ID.
+2.  **Encrypted Link**: The "Sign in with Google" button contains this token: `.../verify?token=XYZ`.
+3.  **Website Handoff**: The website detects the token and allows the user to proceed directly to Google Login without needing an active Discord session on the site.
+4.  **Backend Verification**: Once the user authenticates with Google, the token is passed to our API. The API validates the token, retrieves the correct Discord ID, assigns the roles, and then destroys the token.
+   *This ensures a 10-second verification flow even on mobile devices where users aren't logged into Discord on their browsers.*
+
 ## Features
 
 *   **Privacy First**: Emails are hashed. We don't store plain-text emails for manual codes.

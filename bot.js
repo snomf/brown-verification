@@ -298,9 +298,18 @@ client.on('interactionCreate', async interaction => {
             const isStudent = email.endsWith('@brown.edu');
 
             if (!isStudent && !isAlumni) {
+                // Generate a fresh token for the Google button in error case too
+                const token = crypto.randomUUID();
+                const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+                await supabase.from('verify_tokens').insert({ token, discord_id: interaction.user.id, expires_at: expiresAt.toISOString() });
+                const googleTokenButton = new ButtonBuilder()
+                    .setLabel('Sign in with Google')
+                    .setURL(`https://brunov.juainny.com/verify?token=${token}`)
+                    .setStyle(ButtonStyle.Link);
+
                 return interaction.editReply({
                     content: '<:bearbear:1458612533492711434> Grr... that doesn\'t look like a **@brown.edu** or **@alumni.brown.edu** email!',
-                    components: [new ActionRowBuilder().addComponents(googleButton)]
+                    components: [new ActionRowBuilder().addComponents(googleTokenButton)]
                 });
             }
 
@@ -339,9 +348,18 @@ client.on('interactionCreate', async interaction => {
                     `
                 });
 
+                // Include token in Google button even in email flow as a fallback
+                const token = crypto.randomUUID();
+                const tokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+                await supabase.from('verify_tokens').insert({ token, discord_id: interaction.user.id, expires_at: tokenExpiresAt.toISOString() });
+                const googleTokenButton = new ButtonBuilder()
+                    .setLabel('Sign in with Google')
+                    .setURL(`https://brunov.juainny.com/verify?token=${token}`)
+                    .setStyle(ButtonStyle.Link);
+
                 return interaction.editReply({
                     content: '<:bearbear:1458612533492711434> I sent the code to your **Brown email**! Please check your inbox and use `/confirm`.',
-                    components: [new ActionRowBuilder().addComponents(googleButton)]
+                    components: [new ActionRowBuilder().addComponents(googleTokenButton)]
                 });
             } catch (err) {
                 console.error('[Bruno Error] Modal verify failed:', err);
@@ -357,12 +375,25 @@ client.on('interactionCreate', async interaction => {
     const discordUserId = user.id;
 
     if (commandName === 'verify') {
-        const method = options.getString('method');
         let email = options.getString('email')?.trim().toLowerCase();
+
+        // One-time token generation for Google Login bypass
+        const token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+        
+        try {
+            await supabase.from('verify_tokens').insert({
+                token,
+                discord_id: discordUserId,
+                expires_at: expiresAt.toISOString()
+            });
+        } catch (err) {
+            console.error('[Bruno Error] Failed to generate verify token:', err);
+        }
 
         const googleButton = new ButtonBuilder()
             .setLabel('Sign in with Google')
-            .setURL('https://brunov.juainny.com/verify?method=google')
+            .setURL(`https://brunov.juainny.com/verify?token=${token}`)
             .setStyle(ButtonStyle.Link);
 
         const emailButton = new ButtonBuilder()
@@ -370,20 +401,7 @@ client.on('interactionCreate', async interaction => {
             .setLabel('Verify via Email Code')
             .setStyle(ButtonStyle.Primary);
 
-        const row = new ActionRowBuilder().addComponents(googleButton);
-
-        // CASE 1: User explicitly chose Google or no options were provided but we want to show Google
-        if (method === 'google') {
-            const embed = new EmbedBuilder()
-                .setTitle('Google Verification 🐻')
-                .setDescription('Click the button below to verify your Brown identity using Google. This is the fastest way to get your role!')
-                .setColor(0x591C0B)
-                .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
-
-            return interaction.reply({ embeds: [embed], components: [new ActionRowBuilder().addComponents(googleButton)], ephemeral: true });
-        }
-
-        // CASE 2: No email and no specific method (or 'email' method chosen without email)
+        // CASE 1: No email provided - show choices
         if (!email) {
             const embed = new EmbedBuilder()
                 .setTitle('How would you like to verify? 🦴')
@@ -395,10 +413,9 @@ client.on('interactionCreate', async interaction => {
             return interaction.reply({ embeds: [embed], components: [choiceRow], ephemeral: true });
         }
 
-        // CASE 3: Process Email Flow (Email was provided)
+        // CASE 2: Email provided - process immediately
         await interaction.deferReply({ ephemeral: true });
 
-        // Proceed with existing email logic...
         if (!email.includes('@')) {
             email = `${email}@brown.edu`;
         }
