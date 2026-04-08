@@ -92,37 +92,41 @@ const commands = [
         description: 'Management commands (Bot status, reminders, etc.)',
         options: [
             {
-                name: 'action',
-                description: 'What do you want to do?',
-                type: ApplicationCommandOptionType.String,
-                required: true,
-                choices: [
-                    { name: 'Update Status', value: 'status' },
-                    { name: 'Send Reminder', value: 'remind' },
+                name: 'status',
+                description: 'Update the bot\'s presence and status text',
+                type: ApplicationCommandOptionType.Subcommand,
+                options: [
+                    {
+                        name: 'text',
+                        description: 'Status text (e.g. "Verifying Students!")',
+                        type: ApplicationCommandOptionType.String,
+                        required: true,
+                    },
+                    {
+                        name: 'presence',
+                        description: 'Presence type',
+                        type: ApplicationCommandOptionType.String,
+                        required: true,
+                        choices: [
+                            { name: 'Online', value: 'online' },
+                            { name: 'DND', value: 'dnd' },
+                            { name: 'Idle', value: 'idle' },
+                        ]
+                    }
                 ]
             },
             {
-                name: 'text',
-                description: 'Status text (Only for Update Status)',
-                type: ApplicationCommandOptionType.String,
-                required: false,
-            },
-            {
-                name: 'presence',
-                description: 'Presence (Only for Update Status)',
-                type: ApplicationCommandOptionType.String,
-                required: false,
-                choices: [
-                    { name: 'Online', value: 'online' },
-                    { name: 'DND', value: 'dnd' },
-                    { name: 'Idle', value: 'idle' },
+                name: 'remind',
+                description: 'Send a verification reminder to a user',
+                type: ApplicationCommandOptionType.Subcommand,
+                options: [
+                    {
+                        name: 'user',
+                        description: 'The user to remind',
+                        type: ApplicationCommandOptionType.User,
+                        required: true,
+                    }
                 ]
-            },
-            {
-                name: 'user',
-                description: 'Target user (Only for Send Reminder)',
-                type: ApplicationCommandOptionType.User,
-                required: false,
             }
         ],
     },
@@ -134,23 +138,30 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN)
     try {
         console.log('Started refreshing application (/) commands.');
 
-        if (process.env.DISCORD_GUILD_ID) {
-            console.log(`Registering commands to Guild: ${process.env.DISCORD_GUILD_ID}`);
+        const clientId = process.env.DISCORD_CLIENT_ID;
+        const guildId = process.env.DISCORD_GUILD_ID;
+
+        if (!clientId) throw new Error("DISCORD_CLIENT_ID is missing!");
+
+        // 1. ALWAYS clear global commands first to resolve duplicates
+        console.log('Cleaning up global commands (this prevents duplicates)...');
+        await rest.put(
+            Routes.applicationCommands(clientId),
+            { body: [] },
+        );
+
+        if (guildId) {
+            // 2. Register to specific guild for instant updates
+            console.log(`Registering commands to Guild: ${guildId}`);
             await rest.put(
-                Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.DISCORD_GUILD_ID),
+                Routes.applicationGuildCommands(clientId, guildId),
                 { body: commands },
             );
-            
-            // OPTIONAL: Clear global commands to fix duplicates
-            console.log('Clearing global commands to avoid duplicates...');
-            await rest.put(
-                Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
-                { body: [] },
-            );
         } else {
-            console.log('Registering global commands...');
+            // 3. Register globally (takes ~1 hour to propagate)
+            console.log('Registering global commands (no guild ID found)...');
             await rest.put(
-                Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
+                Routes.applicationCommands(clientId),
                 { body: commands },
             );
         }

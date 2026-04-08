@@ -7,11 +7,11 @@ const { getServerConfig } = require('./lib/config');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 
-const VERSION = '1.0.2';
+const VERSION = '1.0.3';
 
 /**
  * BRUNO VERIFIES - PERSISTENT BOT (RESTORED)
- * Version: 1.0.2
+ * Version: 1.0.3
  * This script handles Discord commands for verify and /confirm.
  */
 
@@ -38,10 +38,20 @@ function hashEmail(email) {
 // getServerSettings has been replaced by lib/config.js:getServerConfig() for unification.
 
 async function isUserAdmin(user, settings) {
-    if (!settings || !settings.adminRoleIds || settings.adminRoleIds.length === 0) return false;
+    if (!settings) return false;
+
+    // 1. Check Super Admin Bypass (Direct User ID)
+    if (settings.adminUserId && user.id === settings.adminUserId) return true;
+
+    // 2. Check Role IDs
+    if (!settings.adminRoleIds || settings.adminRoleIds.length === 0) return false;
     
     try {
-        if (!settings.guildId) return false;
+        if (!settings.guildId) {
+            // If we don't have a guild ID, we can't check roles safely, 
+            // but we already checked the direct User ID bypass above.
+            return false;
+        }
         
         const guild = await client.guilds.fetch(settings.guildId).catch(() => null);
         if (!guild) {
@@ -64,10 +74,37 @@ client.once('ready', async () => {
     console.log('Bruno is ONLINE. Sniffing for logs...');
 
     const settings = await getServerConfig();
-    client.user.setPresence({
-        activities: [{ name: 'Custom Status', state: settings.botStatusText, type: 4 }],
-        status: settings.botStatusPresence,
-    });
+    
+    const updatePresence = (config) => {
+        console.log(`[Config Log] Updating presence: ${config.botStatusPresence} | ${config.botStatusText}`);
+        client.user.setPresence({
+            activities: [{ name: 'Custom Status', state: config.botStatusText, type: 4 }],
+            status: config.botStatusPresence,
+        });
+    };
+
+    updatePresence(settings);
+
+    // REAL-TIME CONFIG SYNC
+    // Listen for changes to the server_settings table (ID=1)
+    supabase
+        .channel('server_settings_changes')
+        .on(
+            'postgres_changes',
+            {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'server_settings',
+                filter: 'id=eq.1'
+            },
+            async (payload) => {
+                console.log('[Config Log] Real-time settings update received from Supabase!');
+                // Fetch fresh config to ensure all mappings are applied
+                const freshSettings = await getServerConfig();
+                updatePresence(freshSettings);
+            }
+        )
+        .subscribe();
 });
 
 
@@ -114,11 +151,14 @@ async function logToChannel(discordUserId, method = 'command') {
 client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) {
         const settings = await getServerConfig();
-        const allowedRoles = settings.allowedModRoleIds;
+        const allowedRoles = [...(settings.allowedModRoleIds || []), ...(settings.adminRoleIds || [])];
+        
         const memberRoles = Array.isArray(interaction.member?.roles)
             ? interaction.member?.roles
             : (interaction.member?.roles?.cache ? interaction.member?.roles.cache.map(r => r.id) : []);
-        const isAdmin = memberRoles.some(role => allowedRoles.includes(role));
+
+        const isSuperAdmin = settings.adminUserId && interaction.user.id === settings.adminUserId;
+        const isAdmin = isSuperAdmin || memberRoles.some(role => allowedRoles.includes(role));
 
         if (!isAdmin) {
             return interaction.reply({ content: 'You are not authorized to use these buttons.', ephemeral: true });
@@ -653,9 +693,9 @@ client.on('interactionCreate', async interaction => {
             return interaction.reply({ content: '<:BearShock:1460381158134120529> ROAR! You are not authorized to use this command. Only Admins can manage my brain!', ephemeral: true });
         }
 
-        const action = options.getString('action');
+        const subcommand = options.getSubcommand();
 
-        if (action === 'status') {
+        if (subcommand === 'status') {
             const text = options.getString('text');
             const presence = options.getString('presence');
 
@@ -664,11 +704,13 @@ client.on('interactionCreate', async interaction => {
             }
 
             try {
+                // Update presence immediately
                 await client.user.setPresence({
                     activities: [{ name: 'Custom Status', state: text, type: 4 }],
                     status: presence,
                 });
                 
+                // Persist to Supabase
                 await supabase.from('server_settings').update({
                     bot_status_presence: presence,
                     bot_status_text: text,
@@ -682,7 +724,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        if (action === 'remind') {
+        if (subcommand === 'remind') {
             const targetUser = options.getUser('user');
             if (!targetUser) return interaction.reply({ content: 'Please specify a user.', ephemeral: true });
 
