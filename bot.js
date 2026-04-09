@@ -139,7 +139,7 @@ async function logToChannel(discordUserId, method = 'command') {
             const { count, error } = await supabase
                 .from('verifications')
                 .select('*', { count: 'exact', head: true });
-            
+
             if (!error && count !== null) {
                 headcountText = `Congratulations to the **${getOrdinal(count)}** student to verify! 🐻`;
             }
@@ -158,7 +158,7 @@ async function logToChannel(discordUserId, method = 'command') {
                     textDisplay => textDisplay.setContent(`**Method:** ${methodText}`)
                 )
             );
-        
+
         await webhookClient.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
         console.log(`[Bruno Log] Logged verification for ${discordUserId} to webhook.`);
     } catch (err) {
@@ -253,7 +253,7 @@ client.on('interactionCreate', async interaction => {
             const str = JSON.stringify(raw);
             const match = str.match(/"url":"(https:\/\/[^"]+)"/);
             if (match) thumbnailUrl = match[1];
-        } catch(e) {}
+        } catch (e) { }
 
         const container = new ContainerBuilder()
             .setAccentColor(color)
