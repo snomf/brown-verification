@@ -142,6 +142,8 @@ async function logToChannel(discordUserId, method = 'command') {
 
             if (!error && count !== null) {
                 headcountText = `Congratulations to the **${getOrdinal(count)}** student to verify! 🐻`;
+            } else if (error) {
+                console.error('[Bruno Error] Supabase count error:', error);
             }
         } catch (err) {
             console.error('[Bruno Error] Headcount fetch failed:', err);
@@ -151,15 +153,15 @@ async function logToChannel(discordUserId, method = 'command') {
         const webhookClient = new WebhookClient({ url: webhookUrl });
         const container = new ContainerBuilder()
             .setAccentColor(0x591C0B)
-            .addSectionComponents(section => section
-                .addTextDisplayComponents(
-                    textDisplay => textDisplay.setContent('**🐻 User Verified!**'),
-                    textDisplay => textDisplay.setContent(`<@${discordUserId}> has successfully received the accepted role.\n\n${headcountText}`),
-                    textDisplay => textDisplay.setContent(`**Method:** ${methodText}`)
-                )
+            .addTextDisplayComponents(
+                textDisplay => textDisplay.setContent('**🐻 User Verified!**'),
+                textDisplay => textDisplay.setContent(`<@${discordUserId}> has successfully received the accepted role.\n\n${headcountText}`),
+                textDisplay => textDisplay.setContent(`**Method:** ${methodText}`)
             );
 
-        await webhookClient.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        await webhookClient.send({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(err => {
+            console.error('[Bruno Error] Webhook send failed:', err);
+        });
         console.log(`[Bruno Log] Logged verification for ${discordUserId} to webhook.`);
     } catch (err) {
         console.error('[Bruno Error] Failed to send webhook log:', err.message);
@@ -491,13 +493,13 @@ client.on('interactionCreate', async interaction => {
                 // Add Class Year if provided
                 if (classYear === '2030') {
                     rolesToAssign.push(ROLES.STUDENT);
-                    successMsg = "<:brunobear:1460379061816787139> Welcome, Class of '30! You've been verified and certified. ROARRRRRRRRR! 🐻";
+                    successMsg = "<:brunobear:1460379061816787139> Welcome to the Brown Family! You've been verified and certified. ROARRRRRRRRR! 🐻";
                 } else if (classYear && ROLES[classYear]) {
                     rolesToAssign.push(ROLES.STUDENT);
                     rolesToAssign.push(ROLES[classYear]);
-                    successMsg = `<:brunobear:1460379061816787139> Welcome back, Class of '${classYear.slice(2)}! You've been verified and certified. 🐻`;
+                    successMsg = `<:brunobear:1460379061816787139> Welcome to the community! You've been verified and certified. 🐻`;
                 } else {
-                    successMsg = "You're verified, certified, Bruno-approved, yes, and 100% brunonian! Welcome home! 🐻";
+                    successMsg = "You're verified, certified, and officially a Brunonian! Welcome home! 🐻";
                 }
             }
 
@@ -706,7 +708,7 @@ client.on('interactionCreate', async interaction => {
             if (ocrData && ocrData.ParsedResults && ocrData.ParsedResults.length > 0) {
                 ocrText = ocrData.ParsedResults[0].ParsedText || '';
                 const lowerText = ocrText.toLowerCase();
-                const keywords = ['brown', 'university', 'congratulations', 'admitted', 'accepted', 'class of 2030', 'welcome'];
+                const keywords = ['brown', 'university', 'congratulations', 'admitted', 'accepted', 'class of', 'class of 2029', 'class of 2030', 'welcome'];
                 let matched = 0;
                 keywords.forEach(kw => {
                     if (lowerText.includes(kw)) matched++;
