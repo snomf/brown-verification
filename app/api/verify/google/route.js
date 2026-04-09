@@ -113,10 +113,12 @@ export async function POST(req) {
             throw new Error('Failed to assign Discord roles. Are you in the server?');
         }
 
+        const methodToLog = token ? 'command_google' : 'website_google';
+
         const { error: insertError } = await supabase.from('verifications').upsert({
             discord_id: discordUserId,
             email_hash: 'google_oauth_' + discordUserId,
-            verification_method: 'website_google',
+            verification_method: methodToLog,
             verified_at: new Date().toISOString(),
             type: verificationType
         }, { onConflict: 'discord_id' });
@@ -126,7 +128,7 @@ export async function POST(req) {
         }
 
         // Log to Discord Channel
-        logToChannel(discordUserId, 'website_google').catch(console.error);
+        logToChannel(discordUserId, methodToLog).catch(console.error);
 
         return NextResponse.json({ success: true, message: successMsg, discordUsername });
     } catch (error) {

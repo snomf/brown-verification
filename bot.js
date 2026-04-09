@@ -1,7 +1,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, MessageFlags } = require('discord.js');
 const { supabaseAdmin: supabase } = require('./lib/supabase');
 const { getServerConfig } = require('./lib/config');
 const { Resend } = require('resend');
@@ -108,6 +108,14 @@ client.once('ready', async () => {
 });
 
 
+function getOrdinal(n) {
+    const j = n % 10, k = n % 100;
+    if (j === 1 && k !== 11) return n + "st";
+    if (j === 2 && k !== 12) return n + "nd";
+    if (j === 3 && k !== 13) return n + "rd";
+    return n + "th";
+}
+
 // Webhook Logger
 async function logToChannel(discordUserId, method = 'command') {
     const webhookUrl = process.env.DISCORD_LOG_WEBHOOK;
@@ -126,22 +134,32 @@ async function logToChannel(discordUserId, method = 'command') {
             methodText = 'They have received their accepted role using the website.';
         }
 
-        await fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                embeds: [
-                    {
-                        title: '🐻 User Verified!',
-                        description: `<@${discordUserId}> has successfully received the accepted role.`,
-                        fields: [
-                            { name: 'Method', value: methodText, inline: true }
-                        ],
-                        color: 0x591C0B
-                    }
-                ]
-            }),
-        });
+        let headcountText = '';
+        try {
+            const { count, error } = await supabase
+                .from('verifications')
+                .select('*', { count: 'exact', head: true });
+            
+            if (!error && count !== null) {
+                headcountText = `Congratulations to the **${getOrdinal(count)}** student to verify! 🐻`;
+            }
+        } catch (err) {
+            console.error('[Bruno Error] Headcount fetch failed:', err);
+        }
+
+        const { WebhookClient } = require('discord.js');
+        const webhookClient = new WebhookClient({ url: webhookUrl });
+        const container = new ContainerBuilder()
+            .setAccentColor(0x591C0B)
+            .addSectionComponents(section => section
+                .addTextDisplayComponents(
+                    textDisplay => textDisplay.setContent('**🐻 User Verified!**'),
+                    textDisplay => textDisplay.setContent(`<@${discordUserId}> has successfully received the accepted role.\n\n${headcountText}`),
+                    textDisplay => textDisplay.setContent(`**Method:** ${methodText}`)
+                )
+            );
+        
+        await webhookClient.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
         console.log(`[Bruno Log] Logged verification for ${discordUserId} to webhook.`);
     } catch (err) {
         console.error('[Bruno Error] Failed to send webhook log:', err.message);
@@ -228,30 +246,43 @@ client.on('interactionCreate', async interaction => {
             color = 0xFFFF00;
         }
 
-        // Update the embed and grey out ONLY the pressed button
-        const embed = EmbedBuilder.from(interaction.message.embeds[0])
-            .setColor(color)
-            .setTitle(`Ivy Verify Submission - ${statusText}`);
+        // Update the component and grey out ONLY the pressed button
+        let thumbnailUrl = 'https://brunov.juainny.com/bruno-bear.png';
+        try {
+            const raw = interaction.message.toJSON();
+            const str = JSON.stringify(raw);
+            const match = str.match(/"url":"(https:\/\/[^"]+)"/);
+            if (match) thumbnailUrl = match[1];
+        } catch(e) {}
 
-        const newRow = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId(`verify_approve_${targetId}`)
-                .setLabel('Approve')
-                .setStyle(ButtonStyle.Success)
-                .setDisabled(action === 'approve'),
-            new ButtonBuilder()
-                .setCustomId(`verify_deny_${targetId}`)
-                .setLabel('Deny')
-                .setStyle(ButtonStyle.Danger)
-                .setDisabled(action === 'deny'),
-            new ButtonBuilder()
-                .setCustomId(`verify_manual_${targetId}`)
-                .setLabel('Needs Manual DM')
-                .setStyle(ButtonStyle.Secondary)
-                .setDisabled(action === 'manual')
-        );
+        const container = new ContainerBuilder()
+            .setAccentColor(color)
+            .addSectionComponents((section) => section
+                .addTextDisplayComponents(
+                    (textDisplay) => textDisplay.setContent(`**Ivy Verify Submission - ${statusText}**`),
+                    (textDisplay) => textDisplay.setContent(`This submission has been reviewed by a moderator.\nStatus: **${statusText}**`)
+                )
+                .setThumbnailAccessory((thumbnail) => thumbnail.setDescription('User submission').setURL(thumbnailUrl))
+            )
+            .addActionRowComponents((actionRow) => actionRow.setComponents(
+                new ButtonBuilder()
+                    .setCustomId(`verify_approve_${targetId}`)
+                    .setLabel('Approve')
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(action === 'approve'),
+                new ButtonBuilder()
+                    .setCustomId(`verify_deny_${targetId}`)
+                    .setLabel('Deny')
+                    .setStyle(ButtonStyle.Danger)
+                    .setDisabled(action === 'deny'),
+                new ButtonBuilder()
+                    .setCustomId(`verify_manual_${targetId}`)
+                    .setLabel('Needs Manual DM')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(action === 'manual')
+            ));
 
-        await interaction.message.edit({ embeds: [embed], components: [newRow] });
+        await interaction.message.edit({ embeds: [], components: [container], flags: MessageFlags.IsComponentsV2, content: null });
         return;
     }
 
@@ -404,14 +435,20 @@ client.on('interactionCreate', async interaction => {
             .setEmoji('1460785586284531856')
             .setStyle(ButtonStyle.Primary);
 
-        const embed = new EmbedBuilder()
-            .setTitle('How would you like to verify? (There are options!)')
-            .setDescription('Choose a method below to verify your Brunonian status. Google Login is recommended for speed!')
-            .setColor(0x591C0B)
-            .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
+        const container = new ContainerBuilder()
+            .setAccentColor(0x591C0B)
+            .addSectionComponents((section) => section
+                .addTextDisplayComponents(
+                    (textDisplay) => textDisplay.setContent('**How would you like to verify? (There are options!)**'),
+                    (textDisplay) => textDisplay.setContent('Choose a method below to verify your Brunonian status. Google Login is recommended for speed!')
+                )
+                .setThumbnailAccessory(
+                    (thumbnail) => thumbnail.setDescription('Bruno Bear').setURL('https://brunov.juainny.com/bruno-bear.png')
+                )
+            )
+            .addActionRowComponents((actionRow) => actionRow.setComponents(googleButton, emailButton));
 
-        const choiceRow = new ActionRowBuilder().addComponents(googleButton, emailButton);
-        return interaction.reply({ embeds: [embed], components: [choiceRow], ephemeral: true });
+        return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral: true });
     }
 
     if (commandName === 'confirm') {
@@ -701,41 +738,47 @@ client.on('interactionCreate', async interaction => {
                 expires_at: expiresAt
             }, { onConflict: 'discord_id' });
 
-            const embed = new EmbedBuilder()
-                .setTitle(`New Ivy Verify Submission - AUTO APPROVED`)
-                .setDescription(`User: <@${discordUserId}>\nScore: **${score}/100**\nExpires: ${new Date(expiresAt).toLocaleDateString()}\nNote: ${note || 'None'}\n\n*This user was automatically granted the role, but you can still deny or flag for manual review if the image looks sketchy.*`)
-                .setColor(0x00FF00)
-                .setThumbnail(attachment.url);
-
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`verify_deny_${discordUserId}`).setLabel('Deny').setStyle(ButtonStyle.Danger),
-                new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
-            );
+            const container = new ContainerBuilder()
+                .setAccentColor(0x00FF00)
+                .addSectionComponents((section) => section
+                    .addTextDisplayComponents(
+                        (textDisplay) => textDisplay.setContent('**New Ivy Verify Submission - AUTO APPROVED**'),
+                        (textDisplay) => textDisplay.setContent(`User: <@${discordUserId}>\nScore: **${score}/100**\nExpires: ${new Date(expiresAt).toLocaleDateString()}\nNote: ${note || 'None'}\n\n*This user was automatically granted the role, but you can still deny or flag for manual review if the image looks sketchy.*`)
+                    )
+                    .setThumbnailAccessory((thumbnail) => thumbnail.setDescription('User Image').setURL(attachment.url))
+                )
+                .addActionRowComponents((actionRow) => actionRow.setComponents(
+                    new ButtonBuilder().setCustomId(`verify_deny_${discordUserId}`).setLabel('Deny').setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
+                ));
 
             const modChannelId = settings.modChannelId;
             const modChannel = modChannelId ? await client.channels.fetch(modChannelId).catch(() => null) : null;
-            if (modChannel) await modChannel.send({ embeds: [embed], components: [row] });
+            if (modChannel) await modChannel.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
 
             return interaction.editReply(`<:Verified:1460379061816787139> ROARRRRRR, I smell a Brunonian from a mile away! <:brunobear:1460379061816787139> You've been given the accepted role! 🐻 You will still need to fully verify via the website when you receive your @brown.edu email to get the **Certified Brunonian** status!`);
         } else {
             // Mod Review
-            const embed = new EmbedBuilder()
-                .setTitle(`New Ivy Verify Submission - NEEDS REVIEW`)
-                .setDescription(`User: <@${discordUserId}> (${discordUserId})\nScore: **${score}/100**\nNote: ${note || 'None'}\n\n**OCR Preview:**\n*${ocrText.substring(0, 200)}...*`)
-                .setColor(0xFFA500)
-                .setThumbnail(attachment.url);
-
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`verify_approve_${discordUserId}`).setLabel('Approve').setStyle(ButtonStyle.Success),
-                new ButtonBuilder().setCustomId(`verify_deny_${discordUserId}`).setLabel('Deny').setStyle(ButtonStyle.Danger),
-                new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
-            );
+            const container = new ContainerBuilder()
+                .setAccentColor(0xFFA500)
+                .addSectionComponents((section) => section
+                    .addTextDisplayComponents(
+                        (textDisplay) => textDisplay.setContent('**New Ivy Verify Submission - NEEDS REVIEW**'),
+                        (textDisplay) => textDisplay.setContent(`User: <@${discordUserId}> (${discordUserId})\nScore: **${score}/100**\nNote: ${note || 'None'}\n\n**OCR Preview:**\n*${ocrText.substring(0, 200)}...*`)
+                    )
+                    .setThumbnailAccessory((thumbnail) => thumbnail.setDescription('User Image').setURL(attachment.url))
+                )
+                .addActionRowComponents((actionRow) => actionRow.setComponents(
+                    new ButtonBuilder().setCustomId(`verify_approve_${discordUserId}`).setLabel('Approve').setStyle(ButtonStyle.Success),
+                    new ButtonBuilder().setCustomId(`verify_deny_${discordUserId}`).setLabel('Deny').setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId(`verify_manual_${discordUserId}`).setLabel('Needs Manual DM').setStyle(ButtonStyle.Secondary)
+                ));
 
             const modChannelId = settings.modChannelId;
             const modChannel = modChannelId ? await client.channels.fetch(modChannelId).catch(() => null) : null;
             let modMessageId = null;
             if (modChannel) {
-                const modMsg = await modChannel.send({ embeds: [embed], components: [row] });
+                const modMsg = await modChannel.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
                 modMessageId = modMsg.id;
             }
 
@@ -799,18 +842,20 @@ client.on('interactionCreate', async interaction => {
             if (!targetUser) return interaction.reply({ content: 'Please specify a user.', ephemeral: true });
 
             try {
-                const remindEmbed = new EmbedBuilder()
-                    .setTitle('Verification Reminder 🐻 ROARRRRRR')
-                    .setDescription(`Hey <@${targetUser.id}>! Remember to verify to get full access to the Brownies server (+ the role)! <:bruno_bear:1460379061816787139>`)
-                    .addFields(
-                        { name: '🌐 Website (recommended)', value: '[brunov.juainny.com](https://brunov.juainny.com) (Best for @brown.edu emails)', inline: false },
-                        { name: '💬 Slash Command', value: 'Use `/verify` right in the server!', inline: false },
-                        { name: '📄 No Brown Email? (not recommended)', value: 'Use `/ivy-verify` and upload a screenshot of your acceptance letter! ', inline: false }
-                    )
-                    .setColor(0x591C0B)
-                    .setThumbnail('https://brunov.juainny.com/bruno-bear.png');
+                const remindContainer = new ContainerBuilder()
+                    .setAccentColor(0x591C0B)
+                    .addSectionComponents((section) => section
+                        .addTextDisplayComponents(
+                            (textDisplay) => textDisplay.setContent('**Verification Reminder 🐻 ROARRRRRR**'),
+                            (textDisplay) => textDisplay.setContent(`Hey <@${targetUser.id}>! Remember to verify to get full access to the Brownies server (+ the role)! <:bruno_bear:1460379061816787139>`),
+                            (textDisplay) => textDisplay.setContent(`**🌐 Website (recommended)**\n[brunov.juainny.com](https://brunov.juainny.com) (Best for @brown.edu emails)\n\n**💬 Slash Command**\nUse \`/verify\` right in the server!\n\n**📄 No Brown Email? (not recommended)**\nUse \`/ivy-verify\` and upload a screenshot of your acceptance letter!`)
+                        )
+                        .setThumbnailAccessory(
+                            (thumbnail) => thumbnail.setDescription('Bruno Bear').setURL('https://brunov.juainny.com/bruno-bear.png')
+                        )
+                    );
 
-                await targetUser.send({ embeds: [remindEmbed] }).catch(async () => {
+                await targetUser.send({ components: [remindContainer], flags: MessageFlags.IsComponentsV2 }).catch(async () => {
                     return interaction.reply({ content: `❌ Could not send DM to <@${targetUser.id}>. Their DMs might be closed.`, ephemeral: true });
                 });
 

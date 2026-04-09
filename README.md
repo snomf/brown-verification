@@ -16,6 +16,8 @@
 5.  **Confirmation**: The user saves the code or approves OAuth.
 6.  **Role Assignment**: The bot immediately assigns the verified class roles in Discord.
 
+For a detailed breakdown of how students are categorized and which roles they receive, see our [Verification Flows & Sorting Logic Guide](VERIFICATION_FLOWS.md).
+
 ### 🚀 Login-less Verification Flow (Token Bypass)
 To make verification as seamless as possible, we use a **One-Time Token (OTT)** system that allows users starting from Discord to bypass the website's Discord login requirement:
 1.  **Bot Generation**: When a user runs `/verify` in Discord, the bot generates a secure, short-lived UUID token linked to that user's Discord ID.
